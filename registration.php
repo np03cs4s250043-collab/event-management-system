@@ -7,7 +7,7 @@ $_SESSION['csrf_token'] = $csrf_token;
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Register</title>
+    <title>Register hello</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -109,6 +109,7 @@ function validateForm() {
 
     return true;
 }
+
 </script>
 
 </body>
