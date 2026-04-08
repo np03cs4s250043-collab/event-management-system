@@ -6,6 +6,7 @@ define('DB_USER',    'root');
 define('DB_PASS',    '');
 define('DB_CHARSET', 'utf8mb4');
 
+//function to create and return database connection
 function getDB(): PDO
 {
     static $pdo = null;
