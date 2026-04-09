@@ -107,6 +107,7 @@ function handleRegister(): void
         header('Location: /ems/index.php?page=register');
         exit;
     }
+    echo "Hello";
 
     $userModel = new User();
 
