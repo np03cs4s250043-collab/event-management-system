@@ -1,84 +1,93 @@
 <?php
-require_once __DIR__ . '/../models/User.php';
+// controllers/BookingController.php
+declare(strict_types=1);
 
-class AuthController {
+require_once __DIR__ . '/../config/db_connect.php';
+require_once __DIR__ . '/../core/csrf_helper.php';
+require_once __DIR__ . '/../core/session_helper.php';
+require_once __DIR__ . '/../models/Booking.php';
+require_once __DIR__ . '/../models/Ticket.php';
 
-    public function loginPage(): void {
-        $pageTitle = 'Login';
-        $hideNav = true;
-        $error = '';
+requireLogin();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!validateCSRF()) { setFlash('error', 'Invalid request.'); redirect(APP_URL . '/index.php?page=login'); }
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $userModel = new User();
-            $user = $userModel->login($email, $password);
-            if ($user) {
-                session_regenerate_id(true);
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['role'] = $user['role'];
-                $_SESSION['full_name'] = $user['full_name'];
-                $_SESSION['email'] = $user['email'];
-                setFlash('success', 'Welcome back, ' . $user['full_name'] . '!');
-                $dest = match($user['role']) {
-                    'admin' => '/index.php?page=admin/dashboard',
-                    'organizer' => '/index.php?page=organizer/dashboard',
-                    default => '/index.php'
-                };
-                redirect(APP_URL . $dest);
-            } else {
-                $error = 'Invalid email or password.';
-            }
-        }
+$action = $_POST['action'] ?? '';
 
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/auth/login.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
+match($action) {
+    'book'   => handleBook(),
+    'cancel' => handleCancelBooking(),
+    default  => redirect('events'),
+};
+
+
+function handleBook(): void
+{
+    requireRole('attendee', 'admin');
+    validateCsrfToken($_POST['csrf_token'] ?? '');
+
+    $eventId  = (int)($_POST['event_id']  ?? 0);
+    $ticketId = (int)($_POST['ticket_id'] ?? 0);
+    $quantity = max(1, min(10, (int)($_POST['quantity'] ?? 1)));
+
+    if (!$eventId || !$ticketId) {
+        setFlash('error', 'Invalid booking request.');
+        redirect('events');
     }
 
-    public function registerPage(): void {
-        $pageTitle = 'Register';
-        $hideNav = true;
-        $errors = [];
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!validateCSRF()) { setFlash('error', 'Invalid request.'); redirect(APP_URL . '/index.php?page=register'); }
-            $name = trim($_POST['full_name'] ?? '');
-            $email = trim($_POST['email'] ?? '');
-            $phone = trim($_POST['phone'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $confirm = $_POST['confirm_password'] ?? '';
-            $role = $_POST['role'] ?? 'attendee';
-
-            if (!$name) $errors[] = 'Full name is required.';
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Valid email is required.';
-            if (!$phone) $errors[] = 'Phone number is required.';
-            if (strlen($password) < 6) $errors[] = 'Password must be at least 6 characters.';
-            if ($password !== $confirm) $errors[] = 'Passwords do not match.';
-            if (!in_array($role, ['attendee','organizer'])) $errors[] = 'Invalid role.';
-
-            if (empty($errors)) {
-                $userModel = new User();
-                if ($userModel->emailExists($email)) {
-                    $errors[] = 'Email already registered.';
-                } else {
-                    $userModel->register($name, $email, $phone, $password, $role);
-                    setFlash('success', 'Registration successful! Please login.');
-                    redirect(APP_URL . '/index.php?page=login');
-                }
-            }
-        }
-
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/auth/register.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
+    $ticketModel = new Ticket();
+    $tickets     = $ticketModel->getByEvent($eventId);
+    $ticket      = null;
+    foreach ($tickets as $t) {
+        if ((int)$t['id'] === $ticketId) { $ticket = $t; break; }
     }
 
-    public function logout(): void {
-        session_unset();
-        session_destroy();
-        header('Location: ' . APP_URL . '/index.php');
-        exit;
+    if (!$ticket) {
+        setFlash('error', 'Ticket type not found.');
+        redirect('events');
     }
+
+    if ($ticket['available'] < $quantity) {
+        setFlash('error', 'Not enough seats available.');
+        redirect('event.detail');
+    }
+
+    $pdo = getDB();
+    $pdo->beginTransaction();
+    try {
+        $bookingModel = new Booking();
+        $bookingModel->create([
+            'attendee_id'  => currentUserId(),
+            'event_id'     => $eventId,
+            'ticket_id'    => $ticketId,
+            'quantity'     => $quantity,
+            'total_amount' => (float)$ticket['price'] * $quantity,
+        ]);
+        $ticketModel->decrementStock($ticketId, $quantity);
+        $pdo->commit();
+        setFlash('success', 'Booking confirmed! Check My Bookings for your ticket details.');
+        redirect('attendee.bookings');
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        error_log('[EMS BOOKING ERROR] ' . $e->getMessage());
+        setFlash('error', 'Booking failed. Please try again.');
+        redirect('events');
+    }
+}
+
+function handleCancelBooking(): void
+{
+    validateCsrfToken($_POST['csrf_token'] ?? '');
+    $bookingId = (int)($_POST['booking_id'] ?? 0);
+    if (!$bookingId) { redirect('attendee.bookings'); }
+
+    $bookingModel = new Booking();
+    $bookingModel->cancel($bookingId, currentUserId());
+
+    setFlash('success', 'Booking cancelled successfully.');
+    redirect('attendee.bookings');
+}
+
+function redirect(string $page): never
+{
+    header('Location: ' . BASE_PATH . "/index.php?page=$page");
+    exit;
 }
