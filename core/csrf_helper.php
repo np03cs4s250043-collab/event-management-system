@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 const CSRF_TOKEN_KEY    = '_csrf_token';
 const CSRF_TOKEN_LENGTH = 32;
 
+
 function generateCsrfToken(): string
 {
     $token = bin2hex(random_bytes(CSRF_TOKEN_LENGTH));
@@ -42,6 +43,7 @@ function validateCsrfToken(string $submitted): void
     }
     generateCsrfToken();
 }
+
 
 function isPost(): bool  { return $_SERVER['REQUEST_METHOD'] === 'POST'; }
 function isAjax(): bool  { return strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest'; }

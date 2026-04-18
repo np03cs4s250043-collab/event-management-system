@@ -16,7 +16,7 @@ function requireLogin(): void
     }
 }
 
-//allows access only if user has required role
+//allows access only if ther user has required role
 function requireRole(string ...$roles): void
 {
     requireLogin();
@@ -26,10 +26,12 @@ function requireRole(string ...$roles): void
     }
 }
 
+
 function setFlash(string $type, string $message): void
 {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];
 }
+
 
 function getFlash(): ?array
 {
