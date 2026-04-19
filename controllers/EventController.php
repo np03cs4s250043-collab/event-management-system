@@ -4,110 +4,197 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config/db_connect.php';
-require_once __DIR__ . '/../core/csrf_helper.php';
 require_once __DIR__ . '/../core/session_helper.php';
+require_once __DIR__ . '/../core/csrf_helper.php';
+require_once __DIR__ . '/../core/api_helpers.php';
 require_once __DIR__ . '/../models/Event.php';
-require_once __DIR__ . '/../models/Ticket.php';
 
-// Ensure user is logged in
-requireLogin();
-
-// Get action from request (create or cancel)
-$action = $_POST['action'] ?? $_GET['action'] ?? '';
-
-// Call correct function based on action
-match($action) {
-    'create' => handleCreate(),
-    'cancel' => handleCancel(),
-    default  => redirect('events'),
-};
-
-// Create new event
-function handleCreate(): void
+class EventController
 {
-    requireRole('organizer', 'admin');
-    validateCsrfToken($_POST['csrf_token'] ?? '');
+    private Event $eventModel;
 
-    // Required fields check
-    $required = ['title', 'description', 'venue', 'city', 'date_start', 'date_end', 'capacity', 'category_id'];
-    foreach ($required as $field) {
-        if (empty($_POST[$field])) {
-            setFlash('error', "Field '$field' is required.");
-            redirect('event.create');
+    public function __construct()
+    {
+        $this->eventModel = new Event();
+    }
+
+    // Show homepage with limited events
+    public function home(): void
+    {
+        $pageTitle = 'Home';
+        $events = $this->eventModel->getApproved('', '', 6, 0);
+        $this->render('events/index.php', compact('pageTitle', 'events'));
+    }
+
+    // Browse events with search
+    public function browse(): void
+    {
+        $search = trim($_GET['search'] ?? '');
+        $category = trim($_GET['category'] ?? '');
+        $perPage = 9;
+        $currentPage = max(1, (int) ($_GET['p'] ?? 1));
+        $offset = ($currentPage - 1) * $perPage;
+
+        // Fetch events
+        $events = $this->eventModel->getApproved($search, $category, $perPage, $offset);
+        $total = $this->eventModel->countApproved($search, $category);
+        
+        // Calculate total pages
+        $totalPages = max(1, (int) ceil($total / $perPage));
+
+        $pg = [
+            'current_page' => $currentPage,
+            'total_pages' => $totalPages,
+            'total' => $total,
+            'per_page' => $perPage,
+        ];
+
+        $pageTitle = 'Browse Events';
+        $this->render('events/detail.php', compact('pageTitle', 'events', 'search', 'category', 'pg'));
+    }
+
+    // Show single event details
+    public function detail(): void
+    {
+        $eventId = (int) ($_GET['id'] ?? 0);
+        if ($eventId <= 0) {
+            $this->redirectPage('events');
         }
-    }
 
-    // Handle cover image upload
-    $coverImage = null;
-    if (!empty($_FILES['cover_image']['tmp_name'])) {
-        $allowed   = ['image/jpeg', 'image/png', 'image/webp'];
-        $mimeType  = mime_content_type($_FILES['cover_image']['tmp_name']);
-        if (!in_array($mimeType, $allowed, true)) {
-            setFlash('error', 'Invalid image type. Use JPG, PNG, or WebP.');
-            redirect('event.create');
+        $event = $this->eventModel->findById($eventId);
+        if (!$event) {
+            $this->redirectPage('events');
         }
-        $ext        = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
-        $filename   = bin2hex(random_bytes(8)) . '.' . strtolower($ext);
-        $uploadDir  = __DIR__ . '/../public/uploads/';
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-        move_uploaded_file($_FILES['cover_image']['tmp_name'], $uploadDir . $filename);
-        $coverImage = $filename;
+
+        // Get rating and reviews
+        $avgRating = $this->eventModel->getAvgRating($eventId);
+        $reviews = $this->eventModel->getReviews($eventId);
+
+        $maxCapacity = max(1, (int) ($event['max_capacity'] ?? 1));
+        $availableSeats = max(0, (int) ($event['available_seats'] ?? 0));
+        $booked = max(0, $maxCapacity - $availableSeats);
+        $seatPercent = (int) round(($booked / $maxCapacity) * 100);
+        $seatPercent = max(0, min(100, $seatPercent));
+        $maxBookable = max(1, min(10, $availableSeats));
+
+        $pageTitle = $event['title'] ?? 'Event Details';
+        $this->render(
+            'events/detail.php',
+            compact('pageTitle', 'event', 'avgRating', 'reviews', 'seatPercent', 'maxBookable')
+        );
     }
 
-    // Save event to database
-    $eventModel = new Event();
-    $eventId    = $eventModel->create([
-        'title'       => trim($_POST['title']),
-        'description' => trim($_POST['description']),
-        'venue'       => trim($_POST['venue']),
-        'city'        => trim($_POST['city']),
-        'date_start'  => $_POST['date_start'],
-        'date_end'    => $_POST['date_end'],
-        'capacity'    => (int)$_POST['capacity'],
-        'category_id' => (int)$_POST['category_id'],
-        'cover_image' => $coverImage,
-        'status'      => in_array($_POST['status'] ?? '', ['published', 'draft']) ? $_POST['status'] : 'draft',
-    ], currentUserId());
-
-    if (!empty($_POST['ticket_name']) && isset($_POST['ticket_price'])) {
-        $ticketModel = new Ticket();
-        $ticketModel->create([
-            'event_id' => $eventId,
-            'name'     => trim($_POST['ticket_name']),
-            'price'    => (float)$_POST['ticket_price'],
-            'quantity' => (int)($_POST['ticket_quantity'] ?? 50),
-        ]);
+    // Organizer dashboard
+    public function organizerDashboard(): void
+    {
+        requireRole('organizer', 'admin');
+        $events = $this->eventModel->getByOrganizer((int) currentUserId());
+        $pageTitle = 'Organizer Dashboard';
+        $this->render('organizer/dashboard.php', compact('pageTitle', 'events'));
     }
 
-    setFlash('success', 'Event created successfully!');
-    redirect('organizer.dashboard');
-}
-
-function handleCancel(): void
-{
-    requireRole('organizer', 'admin');
-    validateCsrfToken($_POST['csrf_token'] ?? '');
-
-    $eventId = (int)($_POST['event_id'] ?? 0);
-    if (!$eventId) { redirect('organizer.dashboard'); }
-
-    $eventModel = new Event();
-    $event      = $eventModel->getById($eventId);
-
-    // Organizers can only cancel their own events; admins can cancel any
-    if (!$event || (currentRole() === 'organizer' && $event['organizer_id'] !== currentUserId())) {
-        setFlash('error', 'Not authorised to cancel this event.');
-        redirect('organizer.dashboard');
+     // Organizer's own events
+    public function organizerHome(): void
+    {
+        requireRole('organizer', 'admin');
+        $events = $this->eventModel->getByOrganizer((int) currentUserId());
+        $pageTitle = 'My Events';
+        $this->render('organizer/home.php', compact('pageTitle', 'events'));
     }
 
-    // Cancel event in database
-    $eventModel->cancel($eventId);
-    setFlash('success', 'Event cancelled.');
-    redirect(currentRole() === 'admin' ? 'admin.events' : 'organizer.dashboard');
-}
+    // Show create event page
+    public function create(): void
+    {
+        requireRole('organizer', 'admin');
+        $pageTitle = 'Create Event';
+        $this->render('events/create.php', compact('pageTitle'));
+    }
 
-function redirect(string $page): never
-{
-    header('Location: ' . BASE_PATH . "/index.php?page=$page");
-    exit;
+    public function edit(): void
+    {
+        requireRole('organizer', 'admin');
+        $this->redirectPage('organizer/dashboard');
+    }
+
+    public function deleteOrganizer(): void
+    {
+        requireRole('organizer', 'admin');
+        $this->redirectPage('organizer/dashboard');
+    }
+
+    // Admin dashboard
+    public function adminDashboard(): void
+    {
+        requireRole('admin');
+        $pageTitle = 'Admin Dashboard';
+        $this->render('admin/dashboard.php', compact('pageTitle'));
+    }
+
+    // Admin manage events
+    public function adminEvents(): void
+    {
+        requireRole('admin');
+        $events = $this->eventModel->getAllAdmin();
+        $pageTitle = 'Manage Events';
+        $this->render('admin/events.php', compact('pageTitle', 'events'));
+    }
+
+    // Admin manage users
+    public function adminUsers(): void
+    {
+        requireRole('admin');
+        $pageTitle = 'Manage Users';
+        $this->render('admin/users.php', compact('pageTitle'));
+    }
+
+    // Approve event
+    public function approve(): void
+    {
+        requireRole('admin');
+        $eventId = (int) ($_POST['event_id'] ?? $_GET['event_id'] ?? 0);
+        if ($eventId > 0) {
+            $this->eventModel->setStatus($eventId, 'published');
+        }
+        $this->redirectPage('admin/events');
+    }
+
+    // Delete event (admin)
+    public function deleteAdmin(): void
+    {
+        requireRole('admin');
+        $eventId = (int) ($_POST['event_id'] ?? $_GET['event_id'] ?? 0);
+        if ($eventId > 0) {
+            $this->eventModel->delete($eventId);
+        }
+        $this->redirectPage('admin/events');
+    }
+
+    // Enable/disable user
+    public function toggleUser(): void
+    {
+        requireRole('admin');
+        $userId = (int) ($_POST['user_id'] ?? $_GET['user_id'] ?? 0);
+        if ($userId > 0) {
+            $db = getDB();
+            $stmt = $db->prepare('UPDATE users SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END WHERE id = ?');
+            $stmt->execute([$userId]);
+        }
+        $this->redirectPage('admin/users');
+    }
+
+    // Load view files
+    private function render(string $view, array $data = []): void
+    {
+        extract($data, EXTR_SKIP);
+        require __DIR__ . '/../views/layouts/header.php';
+        require __DIR__ . '/../views/' . $view;
+        require __DIR__ . '/../views/layouts/footer.php';
+    }
+
+    // Redirect to another page
+    private function redirectPage(string $page): never
+    {
+        header('Location: ' . BASE_PATH . '/index.php?page=' . $page);
+        exit;
+    }
 }

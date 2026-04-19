@@ -6,7 +6,8 @@ define('DB_USER',    'root');
 define('DB_PASS',    '');
 define('DB_CHARSET', 'utf8mb4');
 
-//function to create and return database connection
+define('BASE_PATH', '/event-management-system/git ');
+
 function getDB(): PDO
 {
     static $pdo = null;
