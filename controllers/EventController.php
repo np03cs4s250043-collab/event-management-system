@@ -147,29 +147,81 @@ class EventController
         $this->render('admin/users.php', compact('pageTitle'));
     }
 
-    public function updateEvent($id) {
-    include '../Core/db_connect.php';
+  public function editAdmin(): void {
+    requireRole('admin');
+    $pageTitle = 'Edit Event';
+    $hideNav = true;
+
+    $eventModel = new Event();
+    $id = (int)($_GET['id'] ?? 0);
+    $event = $eventModel->findById($id);
+
+    if (!$event) {
+        setFlash('error', 'Event not found.');
+        redirect(APP_URL . '/index.php?page=admin/events');
+    }
+
+    $errors = [];
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $title = $_POST['title'];
-        $date = $_POST['date'];
-        $price = $_POST['price'];
-        $category = $_POST['category'];
+        if (!validateCSRF()) {
+            setFlash('error', 'Invalid request.');
+            redirect(APP_URL . '/index.php?page=admin/edit_event&id=' . $id);
+        }
 
-        $sql = "UPDATE events 
-                SET title=?, event_date=?, price=?, category=? 
-                WHERE id=?";
+        $data = [
+            'title' => trim($_POST['title'] ?? ''),
+            'description' => trim($_POST['description'] ?? ''),
+            'category' => $_POST['category'] ?? '',
+            'event_date' => $_POST['event_date'] ?? '',
+            'event_time' => $_POST['event_time'] ?? '',
+            'venue' => trim($_POST['venue'] ?? ''),
+            'max_capacity' => (int)($_POST['max_capacity'] ?? 0),
+            'ticket_price' => (float)($_POST['ticket_price'] ?? 0),
+            'cover_image' => $event['cover_image'] ?? null,
+        ];
 
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssdsi", $title, $date, $price, $category, $id);
+        if (!$data['title']) $errors[] = 'Title is required.';
+        if (!$data['description']) $errors[] = 'Description is required.';
+        if (!in_array($data['category'], ['Concert','Conference','Workshop','Webinar','Sports','Festival','Exhibition','Networking','Music Events','Football','Cricket'])) $errors[] = 'Invalid category.';
+        if (!$data['event_date']) $errors[] = 'Date is required.';
+        if (!$data['event_time']) $errors[] = 'Time is required.';
+        if (!$data['venue']) $errors[] = 'Venue is required.';
+        if ($data['max_capacity'] < 1) $errors[] = 'Capacity must be at least 1.';
+        if ($data['ticket_price'] <= 0) $errors[] = 'Price must be greater than 0.';
 
-        if ($stmt->execute()) {
-            header("Location: index.php?page=admin/events&success=updated");
-        } else {
-            echo "Error updating event";
+        if (!empty($_FILES['cover_image']['name'])) {
+            $uploadError = '';
+            $img = uploadImage($_FILES['cover_image'], $uploadError);
+            if ($img) {
+                $data['cover_image'] = $img;
+            } else {
+                $errors[] = $uploadError;
+            }
+        }
+
+        if (empty($errors)) {
+            $eventModel->update($id, $data);
+            setFlash('success', 'Event updated successfully.');
+            redirect(APP_URL . '/index.php?page=admin/events');
         }
     }
+
+    $sidebarLinks = [
+        ['url' => APP_URL . '/index.php?page=admin/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
+        ['url' => APP_URL . '/index.php?page=admin/users', 'icon' => 'group', 'label' => 'Manage Users'],
+        ['url' => APP_URL . '/index.php?page=admin/events', 'icon' => 'event', 'label' => 'Manage Events', 'active' => true],
+        ['url' => APP_URL . '/index.php?page=admin/commission', 'icon' => 'handshake', 'label' => 'Commissions'],
+        ['url' => APP_URL . '/index.php?page=admin/bookings', 'icon' => 'confirmation_number', 'label' => 'All Bookings'],
+        ['url' => APP_URL . '/index.php?page=admin/revenue', 'icon' => 'bar_chart', 'label' => 'Revenue Report'],
+    ];
+
+    require_once __DIR__ . '/../views/layouts/header.php';
+    require_once __DIR__ . '/../views/layouts/sidebar_admin.php';
+    require_once __DIR__ . '/../views/events/create.php';
+    require_once __DIR__ . '/../views/layouts/footer.php';
 }
+
     // Approve event
     public function approve(): void
     {
