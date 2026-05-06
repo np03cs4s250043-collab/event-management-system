@@ -58,5 +58,8 @@
         <div style="text-align:center;margin-top:2rem">
             <p style="font-size:0.875rem;color:var(--secondary)">Already have an account? <a href="<?= APP_URL ?>/index.php?page=login" style="color:var(--primary);font-weight:700;text-decoration:none">Login</a></p>
         </div>
+        <div style="text-align:center;margin-top:1rem">
+            <a href="<?= APP_URL ?>/index.php" style="font-size:0.75rem;color:var(--secondary);text-decoration:none">&larr; Back to Homepage</a>
+        </div>
     </div>
 </div>
