@@ -282,7 +282,7 @@ class EventController {
 }
 
     // Approve event
-    public function approve(): void
+    public function adminDashboard(): void
     {
         requireRole('admin');
         $pageTitle = 'Admin Dashboard';
