@@ -29,7 +29,7 @@
                     <label>Password</label>
                     <div class="input-icon password-field">
                         <span class="material-symbols-outlined">lock</span>
-                        <input type="password" id="register_password" name="password" class="form-input" placeholder="Min 6 characters" required>
+                        <input type="password" id="register_password" name="password" class="form-input" placeholder="Min 8 chars, include number &amp; special char" minlength="8" required>
                         <button type="button" class="password-toggle" data-toggle-password data-target="register_password" aria-label="Show password">
                             <span class="material-symbols-outlined">visibility</span>
                         </button>

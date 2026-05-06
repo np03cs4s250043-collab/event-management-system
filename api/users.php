@@ -146,9 +146,9 @@ switch ($method) {
                 jsonResponse(400, ['error' => 'Current password is incorrect.']);
             }
 
-             // Validate new password length
-            if (strlen($input['password']) < 6) {
-                jsonResponse(422, ['error' => 'New password must be at least 6 characters.']);
+            $np = $input['password'];
+            if (strlen($np) < 8 || !preg_match('/[0-9]/', $np) || !preg_match('/[^A-Za-z0-9]/', $np)) {
+                jsonResponse(422, ['error' => 'New password must be at least 8 characters and include a number and a special character.']);
             }
 
             // Hash and update new password
