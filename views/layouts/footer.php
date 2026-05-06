@@ -1,5 +1,5 @@
 <?php $hideNav = $hideNav ?? false; ?>
-
+</main>
 <?php if (!$hideNav): ?>
     <footer class="footer">
         <div class="footer-inner">

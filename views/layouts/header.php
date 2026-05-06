@@ -51,6 +51,8 @@ $dashboardPath = match ($role) {
 	</header>
 <?php endif; ?>
 
+<main class="page-main">
+
 <?php if (!empty($flash['message'])): ?>
 	<div class="container" style="padding-top:1rem;">
 		<div class="alert alert-<?= h($flash['type'] ?? 'success') ?>">
