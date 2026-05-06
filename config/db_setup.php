@@ -209,14 +209,14 @@ try {
     // SEED: Default Admin User
     $adminPassword = password_hash('admin', PASSWORD_BCRYPT, ['cost' => 12]);
     $stmt = $pdo->prepare("INSERT IGNORE INTO `users` (`name`,`email`,`password_hash`,`role`,`is_verified`,`is_active`) VALUES (:name,:email,:pw,'admin',1,1)");
-    $stmt->execute([':name' => 'System Admin', ':email' => 'admin', ':pw' => $adminPassword]);
+    $stmt->execute([':name' => 'System Admin', ':email' => 'admin@eventify.com', ':pw' => $adminPassword]);
     echo "\n Default admin seeded.\n";
 
     echo "\n";
     echo "╔══════════════════════════════════════════════╗\n";
     echo "║         DATABASE SETUP COMPLETE              ║\n";
     echo "╠══════════════════════════════════════════════╣\n";
-    echo "║    Admin:    admin / admin                   ║\n";
+    echo "║ Admin: admin@eventify.com / admin            ║\n";
     echo "╠══════════════════════════════════════════════╣\n";
     echo "║      DELETE this file NOW!                   ║\n";
     echo "║  http://localhost/event-management-system/   ║\n";
