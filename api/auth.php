@@ -65,7 +65,8 @@ switch ($action) {
         if (!$name)                                  $errors[] = 'Name is required.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Valid email is required.';
         if (!$phone)                                 $errors[] = 'Phone number is required.';
-        if (strlen($password) < 6)                   $errors[] = 'Password must be at least 6 characters.';
+        if (strlen($password) < 8 || !preg_match('/[0-9]/', $password) || !preg_match('/[^A-Za-z0-9]/', $password))
+            $errors[] = 'Password must be at least 8 characters and include a number and a special character.';
         if (!in_array($role, ['attendee', 'organizer'])) $errors[] = 'Role must be attendee or organizer.';
 
         if (!empty($errors)) {
