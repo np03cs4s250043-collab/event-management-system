@@ -27,7 +27,7 @@
             <td><?= date('M d, Y', strtotime($u['created_at'])) ?></td>
             <td><span class="status-badge status-<?= $u['is_active'] ? 'active' : 'inactive' ?>"><?= $u['is_active'] ? 'Active' : 'Inactive' ?></span></td>
             <td>
-                <form method="POST" action="<?= APP_URL ?>/index.php?page=admin/toggle_user" style="display:inline">
+                <form method="POST" action="<?= APP_URL ?>/index.php?page=admin/toggle_user" style="display:inline" onsubmit="return confirm(<?= h(json_encode('Are you sure you want to ' . ($u['is_active'] ? 'deactivate' : 'activate') . ' ' . $u['full_name'] . '?')) ?>);">
                     <?= csrfField() ?><input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
                     <button type="submit" class="btn btn-sm <?= $u['is_active'] ? 'btn-danger' : 'btn-success' ?>"><?= $u['is_active'] ? 'Deactivate' : 'Activate' ?></button>
                 </form>
