@@ -3,6 +3,11 @@
     <table class="data-table">
         <thead><tr><th>Ref</th><th>Event</th><th>Attendee</th><th>Category</th><th>Qty</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
         <tbody>
+        <?php if (empty($bookings)): ?>
+        <tr>
+            <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--secondary);font-weight:600">No bookings yet.</td>
+        </tr>
+        <?php else: ?>
         <?php foreach ($bookings as $b): ?>
         <tr>
             <td style="font-weight:600;font-family:monospace"><?= h($b['booking_ref']) ?></td>
@@ -15,6 +20,7 @@
             <td><?= date('M d, Y', strtotime($b['booked_at'])) ?></td>
         </tr>
         <?php endforeach; ?>
+        <?php endif; ?>
         </tbody>
     </table>
     <?php if ($pg['total_pages'] > 1): ?>
