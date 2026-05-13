@@ -29,7 +29,7 @@
                     <label>Password</label>
                     <div class="input-icon password-field">
                         <span class="material-symbols-outlined">lock</span>
-                        <input type="password" id="register_password" name="password" class="form-input" placeholder="Min 8 chars, include number &amp; special char" minlength="8" required>
+                        <input type="password" id="register_password" name="password" class="form-input" placeholder="Min 8 chars, include number &amp; special char" minlength="8" required value="<?= h($_POST['password'] ?? '') ?>">
                         <button type="button" class="password-toggle" data-toggle-password data-target="register_password" aria-label="Show password">
                             <span class="material-symbols-outlined">visibility</span>
                         </button>
@@ -39,7 +39,7 @@
                     <label>Confirm Password</label>
                     <div class="input-icon password-field">
                         <span class="material-symbols-outlined">lock</span>
-                        <input type="password" id="register_confirm_password" name="confirm_password" class="form-input" placeholder="Re-enter password" required>
+                        <input type="password" id="register_confirm_password" name="confirm_password" class="form-input" placeholder="Re-enter password" required value="<?= h($_POST['confirm_password'] ?? '') ?>">
                         <button type="button" class="password-toggle" data-toggle-password data-target="register_confirm_password" aria-label="Show confirm password">
                             <span class="material-symbols-outlined">visibility</span>
                         </button>
