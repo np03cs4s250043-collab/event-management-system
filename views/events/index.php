@@ -10,7 +10,7 @@
     <div class="category-pills" style="margin-top:2rem">
         <a href="<?= APP_URL ?>/index.php?page=events" class="pill pill-all active">All Events</a>
         <a href="<?= APP_URL ?>/index.php?page=events&category=Concert" class="pill pill-concert">Concerts</a>
-        <a href="<?= APP_URL ?>/index.php?page=events&category=Music+Event" class="pill pill-music">Music Events</a>
+        <a href="<?= APP_URL ?>/index.php?page=events&category=Music+Events" class="pill pill-music">Music Events</a>
         <a href="<?= APP_URL ?>/index.php?page=events&category=Football" class="pill pill-football">Football</a>
         <a href="<?= APP_URL ?>/index.php?page=events&category=Cricket" class="pill pill-cricket">Cricket</a>
     </div>

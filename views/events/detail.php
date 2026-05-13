@@ -19,7 +19,7 @@
     <div class="category-pills">
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>" class="pill pill-all <?= !$category ? 'active' : '' ?>" data-category-filter="">All</a>
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Concert" class="pill pill-concert <?= $category === 'Concert' ? 'active' : '' ?>" data-category-filter="Concert">Concerts</a>
-        <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Music+Event" class="pill pill-music <?= $category === 'Music Event' ? 'active' : '' ?>" data-category-filter="Music Event">Music</a>
+        <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Music+Events" class="pill pill-music <?= $category === 'Music Events' ? 'active' : '' ?>" data-category-filter="Music Events">Music</a>
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Football" class="pill pill-football <?= $category === 'Football' ? 'active' : '' ?>" data-category-filter="Football">Football</a>
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Cricket" class="pill pill-cricket <?= $category === 'Cricket' ? 'active' : '' ?>" data-category-filter="Cricket">Cricket</a>
     </div>
