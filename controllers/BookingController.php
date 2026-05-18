@@ -4,44 +4,32 @@ require_once __DIR__ . '/../models/Booking.php';
 
 class BookingController {
 
-    // Handle checkout process
     public function checkout(): void {
-        requireRole('attendee'); // Only attendees allowed
+        requireRole('attendee');
         $pageTitle = 'Checkout';
 
-        // Validate request method and CSRF
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !validateCSRF()) {
             redirect(APP_URL . '/index.php?page=events');
         }
 
         $eventModel = new Event();
         $bookingModel = new Booking();
-
-         // Get event and quantity
         $eventId = (int)($_POST['event_id'] ?? 0);
         $qty = max(1, min(5, (int)($_POST['quantity'] ?? 1)));
         $event = $eventModel->findById($eventId);
 
-        // Check event validity and seat availability
         if (!$event || $event['status'] !== 'published' || $event['available_seats'] < $qty) {
             setFlash('error', 'Unable to proceed with booking.');
             redirect(APP_URL . '/index.php?page=events');
         }
 
-        $total = $event['ticket_price'] * $qty; // Calculate total price
+        $total = $event['ticket_price'] * $qty;
 
-        // If user confirms booking
         if (isset($_POST['confirm_booking'])) {
             $bookingRef = generateBookingRef();
-
-            // Create and confirm booking
             $bookingId = $bookingModel->create($bookingRef, currentUserId(), $eventId, $qty, $total);
             $bookingModel->confirm($bookingId);
-
-            // Reduce available seats
             $eventModel->decrementSeats($eventId, $qty);
-
-            // Store payment (direct)
             $bookingModel->createPayment($bookingId, 'DIRECT-' . $bookingRef, $total);
 
             setFlash('success', 'Booking confirmed successfully.');
@@ -53,15 +41,12 @@ class BookingController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // Show confirmation page
     public function confirmation(): void {
         $pageTitle = 'Booking Confirmed';
         $hideNav = false;
         $ref = $_GET['ref'] ?? '';
         $bookingModel = new Booking();
         $booking = $bookingModel->findByRef($ref);
-
-        // Redirect if booking not found
         if (!$booking) { redirect(APP_URL . '/index.php?page=events'); }
 
         require_once __DIR__ . '/../views/layouts/header.php';
@@ -69,7 +54,8 @@ class BookingController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // Handle eSewa payment initiation
+    // ── eSewa Payment ────────────────────────────────────────────────────────
+
     public function esewaInitiate(): void {
         requireRole('attendee');
 
@@ -84,22 +70,19 @@ class BookingController {
         $bookingModel = new Booking();
         $event        = $eventModel->findById($eventId);
 
-        // Validate event and seats
         if (!$event || $event['status'] !== 'published' || $event['available_seats'] < $qty) {
             setFlash('error', 'Unable to proceed with booking.');
             redirect(APP_URL . '/index.php?page=events');
         }
 
-        // Prepare payment data
         $totalAmount  = number_format($event['ticket_price'] * $qty, 2, '.', '');
         $bookingRef   = generateBookingRef();
 
-        // Create pending booking
+        // Create a PENDING booking (seats reserved, confirmed after payment)
         $bookingModel->create($bookingRef, currentUserId(), $eventId, $qty, (float)$totalAmount);
 
         require_once __DIR__ . '/../core/EsewaHelper.php';
 
-        // eSewa required fields
         $esewaData = [
             'amount'                  => $totalAmount,
             'tax_amount'              => '0',
@@ -114,7 +97,6 @@ class BookingController {
             'signature'               => EsewaHelper::signature($totalAmount, $bookingRef, EsewaHelper::MERCHANT_CODE),
         ];
 
-        // Redirect view to eSewa
         $pageTitle = 'Redirecting to eSewa';
         $hideNav   = true;
         require_once __DIR__ . '/../views/layouts/header.php';
@@ -144,7 +126,6 @@ class BookingController {
 
         require_once __DIR__ . '/../core/EsewaHelper.php';
 
-        // Verify signature
         if (!EsewaHelper::verifyResponse($data)) {
             error_log('eSewa success: signature mismatch for uuid=' . ($data['transaction_uuid'] ?? '?'));
             setFlash('error', 'Payment signature mismatch. Please contact support.');
@@ -155,7 +136,6 @@ class BookingController {
         $totalAmount = $data['total_amount'];
         $txnCode     = $data['transaction_code'] ?? ('ESW-' . $txnUuid);
 
-        // Verify payment status from eSewa
         if (!EsewaHelper::checkStatus($txnUuid, $totalAmount, EsewaHelper::MERCHANT_CODE)) {
             error_log("eSewa success: status API did not return COMPLETE for {$txnUuid}");
             setFlash('error', 'Payment not verified by eSewa. Please contact support.');
@@ -182,7 +162,6 @@ class BookingController {
         redirect(APP_URL . '/index.php?page=confirmation&ref=' . urlencode($txnUuid));
     }
 
-    // Handle failed/cancelled eSewa payment
     public function esewaFailure(): void {
         // Cancel the pending booking so seats are freed
         $encodedData = $_GET['data'] ?? '';
@@ -201,7 +180,6 @@ class BookingController {
         redirect(APP_URL . '/index.php?page=events');
     }
 
-    // Cancel booking manually
     public function cancel(): void {
         requireRole('attendee');
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRF()) {
@@ -213,7 +191,6 @@ class BookingController {
         redirect(APP_URL . '/index.php?page=attendee/bookings');
     }
 
-     // Attendee dashboard
     public function attendeeDashboard(): void {
         requireRole('attendee');
         $pageTitle = 'My Dashboard';
@@ -233,15 +210,12 @@ class BookingController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // View attendee bookings
     public function attendeeBookings(): void {
         requireRole('attendee');
         $pageTitle = 'My Bookings';
         $hideNav = true;
         $bookingModel = new Booking();
         $type = $_GET['type'] ?? 'upcoming';
-
-        // Fetch bookings
         $bookings = $bookingModel->getByAttendee(currentUserId(), $type);
 
         $sidebarLinks = [
@@ -255,7 +229,6 @@ class BookingController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-      // Submit event review
     public function rate(): void {
         requireRole('attendee');
         $pageTitle = 'Rate Event';
@@ -265,7 +238,6 @@ class BookingController {
         $event = $eventModel->findById($eventId);
         if (!$event) { redirect(APP_URL . '/index.php?page=attendee/bookings'); }
 
-        // Handle review submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRF()) {
             $rating = max(1, min(5, (int)($_POST['rating'] ?? 0)));
             $text = trim($_POST['review_text'] ?? '');
@@ -286,7 +258,6 @@ class BookingController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // Admin: view all bookings
     public function adminBookings(): void {
         requireRole('admin');
         $pageTitle = 'All Bookings';
@@ -303,6 +274,7 @@ class BookingController {
             ['url' => APP_URL . '/index.php?page=admin/events', 'icon' => 'event', 'label' => 'Manage Events'],
             ['url' => APP_URL . '/index.php?page=admin/bookings', 'icon' => 'confirmation_number', 'label' => 'All Bookings', 'active' => true],
             ['url' => APP_URL . '/index.php?page=admin/revenue', 'icon' => 'bar_chart', 'label' => 'Revenue Report'],
+            ['url' => APP_URL . '/index.php?page=admin/commission', 'icon' => 'handshake', 'label' => 'Commissions'],
         ];
         require_once __DIR__ . '/../views/layouts/header.php';
         require_once __DIR__ . '/../views/layouts/sidebar_admin.php';
@@ -310,14 +282,11 @@ class BookingController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // Admin: revenue report
     public function adminRevenue(): void {
         requireRole('admin');
         $pageTitle = 'Revenue Report';
         $hideNav = true;
         $bookingModel = new Booking();
-
-        // Fetch revenue stats
         $stats = $bookingModel->adminStats();
         $revenueByEvent = $bookingModel->revenueByEvent();
 
@@ -327,6 +296,7 @@ class BookingController {
             ['url' => APP_URL . '/index.php?page=admin/events', 'icon' => 'event', 'label' => 'Manage Events'],
             ['url' => APP_URL . '/index.php?page=admin/bookings', 'icon' => 'confirmation_number', 'label' => 'All Bookings'],
             ['url' => APP_URL . '/index.php?page=admin/revenue', 'icon' => 'bar_chart', 'label' => 'Revenue Report', 'active' => true],
+            ['url' => APP_URL . '/index.php?page=admin/commission', 'icon' => 'handshake', 'label' => 'Commissions'],
         ];
         require_once __DIR__ . '/../views/layouts/header.php';
         require_once __DIR__ . '/../views/layouts/sidebar_admin.php';
@@ -334,15 +304,12 @@ class BookingController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // Attendee profile page
     public function attendeeProfile(): void {
         requireRole('attendee');
         $pageTitle = 'My Profile';
         $hideNav = true;
         require_once __DIR__ . '/../models/User.php';
         $userModel = new User();
-
-         // Get current user info
         $user = $userModel->findById(currentUserId());
 
         $sidebarLinks = [
