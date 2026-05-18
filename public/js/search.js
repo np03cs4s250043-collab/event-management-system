@@ -50,7 +50,7 @@ document.querySelectorAll('[data-autocomplete]').forEach(input => {
     input.addEventListener('input', debounce(async (e) => {
         const q = e.target.value.trim();
         if (q.length < 2) { dropdown.classList.remove('show'); return; }
-        const data = await apiFetch(`/api/search.php?q=${encodeURIComponent(q)}`);
+        const data = await apiFetch(`/api/index.php?resource=search&q=${encodeURIComponent(q)}`);
         if (data.results && data.results.length) {
             dropdown.innerHTML = data.results.map(r =>
                 `<a href="${APP_URL}/index.php?page=event&id=${r.event_id}">${r.title} <small style="color:var(--secondary)">${r.category}</small></a>`
@@ -71,26 +71,16 @@ document.querySelectorAll('[data-autocomplete]').forEach(input => {
 // ========================================
 document.querySelectorAll('[data-email-check]').forEach(input => {
     const feedback = input.closest('.form-group')?.querySelector('.email-feedback');
-    let emailTaken = false;
-
     input.addEventListener('blur', async () => {
         const email = input.value.trim();
         if (!email) return;
-        const data = await apiFetch(/api/auth.php?action=check_email&email=${encodeURIComponent(email)});
-        emailTaken = data.available === false;
+        const data = await apiFetch(`/api/index.php?resource=auth&action=check_email&email=${encodeURIComponent(email)}`);
         if (feedback) {
             if (data.available) {
                 feedback.innerHTML = '<span style="color:#27AE60">&#10003; Email available</span>';
             } else {
                 feedback.innerHTML = '<span style="color:var(--error)">&#10007; Email already taken</span>';
             }
-        }
-    });
-
-    input.closest('form')?.addEventListener('submit', e => {
-        if (emailTaken) {
-            e.preventDefault();
-            if (feedback) feedback.innerHTML = '<span style="color:var(--error)">&#10007; Email already taken</span>';
         }
     });
 });
@@ -117,35 +107,6 @@ document.querySelectorAll('[data-qty-selector]').forEach(container => {
     minusBtn?.addEventListener('click', () => { if (qty > 1) { qty--; update(); } });
     plusBtn?.addEventListener('click', () => { if (qty < maxQty) { qty++; update(); } });
     update();
-});
-
-// ========================================
-// Category Filter (Events page - Ajax)
-// ========================================
-document.querySelectorAll('[data-category-filter]').forEach(pill => {
-    pill.addEventListener('click', async (e) => {
-        e.preventDefault();
-        document.querySelectorAll('[data-category-filter]').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        const cat = pill.dataset.categoryFilter;
-        const grid = document.querySelector('[data-event-grid]');
-        if (!grid) return;
-
-        const search = document.querySelector('[name="search"]')?.value || '';
-        const url = `/api/events.php?category=${encodeURIComponent(cat)}&search=${encodeURIComponent(search)}`;
-        const data = await apiFetch(url);
-        if (data.html) {
-            grid.innerHTML = data.html;
-        } else if (data.events) {
-            grid.innerHTML = data.events.map(ev => renderEventCard(ev)).join('');
-        }
-        if (data.events?.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--secondary)"><span class="material-symbols-outlined" style="font-size:3rem;display:block;margin-bottom:1rem">search_off</span>No events found</div>';
-        }
-
-        const pagination = document.querySelector('[data-events-pagination]');
-        if (pagination) pagination.style.display = 'none';
-    });
 });
 
 function renderEventCard(ev) {
@@ -187,6 +148,27 @@ function renderEventCard(ev) {
     </div>`;
 }
 
+function renderEventSkeletonCard() {
+    return `
+    <div class="event-card event-skeleton" aria-hidden="true">
+        <div class="card-img"></div>
+        <div class="card-body">
+            <div class="skeleton-badge"></div>
+            <div class="skeleton-line" style="width:80%"></div>
+            <div class="skeleton-line" style="width:65%"></div>
+            <div class="skeleton-line" style="width:72%"></div>
+        </div>
+        <div class="card-footer">
+            <div class="skeleton-line" style="width:30%"></div>
+            <div class="skeleton-button"></div>
+        </div>
+    </div>`;
+}
+
+function renderSkeletonGrid(count = 6) {
+    return Array.from({ length: count }, () => renderEventSkeletonCard()).join('');
+}
+
 // ========================================
 // Events Page - Live Ajax Search
 // ========================================
@@ -196,23 +178,99 @@ function renderEventCard(ev) {
     const form = document.querySelector('[data-events-search-form]');
     if (!searchInput || !grid || !form) return;
 
+    const categoryPills = document.querySelectorAll('[data-category-filter]');
     const pagination = document.querySelector('[data-events-pagination]');
     const searchBar = document.querySelector('[data-search-focus]');
+    const meta = document.querySelector('[data-search-meta]');
+    const hiddenCategory = form.querySelector('input[name="category"]');
+    const liveLimit = parseInt(form.dataset.liveLimit || '0', 10);
+    let requestId = 0;
+    let skeletonTimer = null;
+
+    function setLoadingState(isLoading) {
+        grid.classList.toggle('is-loading', isLoading);
+        categoryPills.forEach(pill => pill.classList.toggle('is-busy', isLoading));
+
+        if (skeletonTimer) {
+            clearTimeout(skeletonTimer);
+            skeletonTimer = null;
+        }
+
+        if (isLoading) {
+            const skeletonCount = Number.isInteger(liveLimit) && liveLimit > 0 ? liveLimit : 6;
+            // Avoid visual flicker on very fast responses.
+            skeletonTimer = setTimeout(() => {
+                if (grid.classList.contains('is-loading')) {
+                    grid.innerHTML = renderSkeletonGrid(skeletonCount);
+                }
+            }, 120);
+        }
+
+        if (meta && isLoading) {
+            meta.textContent = 'Searching events...';
+        }
+    }
+
+    function syncUrl(search, category) {
+        const params = new URLSearchParams(window.location.search);
+        const pageValue = form.querySelector('input[name="page"]')?.value || params.get('page') || 'events';
+        params.set('page', pageValue);
+
+        if (search) params.set('search', search);
+        else params.delete('search');
+
+        if (category) params.set('category', category);
+        else params.delete('category');
+
+        params.delete('p');
+        const nextUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.replaceState({}, '', nextUrl);
+    }
+
+    function updateMeta(search, category, count) {
+        if (!meta) return;
+        const pieces = [];
+        if (search) pieces.push(`"${search}"`);
+        if (category) pieces.push(category);
+        const context = pieces.length ? ` for ${pieces.join(' in ')}` : '';
+        meta.textContent = `${count} event${count === 1 ? '' : 's'} found${context}.`;
+    }
 
     async function updateGrid() {
+        const currentRequest = ++requestId;
         const activePill = document.querySelector('[data-category-filter].active');
         const category = activePill?.dataset.categoryFilter || '';
         const search = searchInput.value.trim();
-        const data = await apiFetch(`/api/events.php?category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`);
+        if (hiddenCategory) hiddenCategory.value = category;
+
+        setLoadingState(true);
+        const limitParam = Number.isInteger(liveLimit) && liveLimit > 0 ? `&limit=${liveLimit}` : '';
+        const data = await apiFetch(`/api/index.php?resource=events&category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}${limitParam}`);
+
+        if (currentRequest !== requestId) return;
+        setLoadingState(false);
 
         if (Array.isArray(data.events) && data.events.length) {
             grid.innerHTML = data.events.map(ev => renderEventCard(ev)).join('');
+            updateMeta(search, category, data.events.length);
         } else {
             grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:4rem;color:var(--secondary)"><span class="material-symbols-outlined" style="font-size:3.5rem;display:block;margin-bottom:1rem">search_off</span><h3>No events found</h3><p>Try a different keyword or category.</p></div>';
+            updateMeta(search, category, 0);
         }
+
+        syncUrl(search, category);
 
         if (pagination) pagination.style.display = 'none';
     }
+
+    categoryPills.forEach(pill => {
+        pill.addEventListener('click', (e) => {
+            e.preventDefault();
+            categoryPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            updateGrid();
+        });
+    });
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -252,7 +310,7 @@ document.querySelectorAll('[data-booking-tab]').forEach(tab => {
         const type = tab.dataset.bookingTab;
         const container = document.querySelector('[data-bookings-content]');
         if (!container) return;
-        const data = await apiFetch(`/api/bookings.php?type=${type}`);
+        const data = await apiFetch(`/api/index.php?resource=bookings&type=${type}`);
         if (data.html) container.innerHTML = data.html;
     });
 });
