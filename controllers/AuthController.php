@@ -20,6 +20,22 @@ class AuthController {
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['full_name'] = $user['full_name'];
                 $_SESSION['email'] = $user['email'];
+
+                if (!empty($_POST['remember'])) {
+                    $lifetime = 60 * 60 * 24 * 30; // 30 days
+                    $_SESSION['remember_lifetime'] = $lifetime;
+                    $params = session_get_cookie_params();
+                    setcookie(
+                        session_name(),
+                        session_id(),
+                        time() + $lifetime,
+                        $params['path'],
+                        $params['domain'],
+                        $params['secure'],
+                        $params['httponly']
+                    );
+                }
+
                 setFlash('success', 'Welcome back, ' . $user['full_name'] . '!');
                 $dest = match($user['role']) {
                     'admin' => '/index.php?page=admin/dashboard',
@@ -54,8 +70,7 @@ class AuthController {
             if (!$name) $errors[] = 'Full name is required.';
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Valid email is required.';
             if (!$phone) $errors[] = 'Phone number is required.';
-            if (strlen($password) < 8 || !preg_match('/[0-9]/', $password) || !preg_match('/[^A-Za-z0-9]/', $password))
-                $errors[] = 'Password must be at least 8 characters and include a number and a special character.';
+            if (strlen($password) < 6) $errors[] = 'Password must be at least 6 characters.';
             if ($password !== $confirm) $errors[] = 'Passwords do not match.';
             if (!in_array($role, ['attendee','organizer'])) $errors[] = 'Invalid role.';
 
