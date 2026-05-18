@@ -1,18 +1,10 @@
 <?php
 require_once __DIR__ . '/../models/Event.php';
 require_once __DIR__ . '/../models/Booking.php';
-<<<<<<< HEAD
 require_once __DIR__ . '/../models/EventNegotiation.php';
 
-// Main controller for handling event-related operations
 class EventController {
 
-    // Display homepage with latest approved events
-=======
-
-class EventController {
-
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
     public function home(): void {
         $pageTitle = 'Discover Events Near You';
         $currentPage = 'home';
@@ -23,27 +15,15 @@ class EventController {
         require_once __DIR__ . '/../views/events/index.php';
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
-<<<<<<< HEAD
-    // Browse all published events with search and pagination
-=======
 
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
     public function browse(): void {
         $pageTitle = 'Browse Events';
         $currentPage = 'events';
         $eventModel = new Event();
-<<<<<<< HEAD
-        // Get filter and pagination values
-=======
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
         $search = trim($_GET['search'] ?? '');
         $category = $_GET['category'] ?? '';
         $page = max(1, (int)($_GET['p'] ?? 1));
 
-<<<<<<< HEAD
-        // Fetch events
-=======
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
         $total = $eventModel->countApproved($search, $category);
         $pg = paginate($total, EVENTS_PER_PAGE, $page);
         $events = $eventModel->getApproved($search, $category, $pg['per_page'], $pg['offset']);
@@ -53,63 +33,33 @@ class EventController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-<<<<<<< HEAD
-    // Show detailed information about a single event
-    public function detail(): void {
-        $pageTitle = 'Event Details';
-        $eventModel = new Event();
-         // Get event ID
-        $id = (int)($_GET['id'] ?? 0);
-        $event = $eventModel->findById($id);
-        // Check if event exists and is published
-=======
     public function detail(): void {
         $pageTitle = 'Event Details';
         $eventModel = new Event();
         $id = (int)($_GET['id'] ?? 0);
         $event = $eventModel->findById($id);
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
         if (!$event || $event['status'] !== 'published') {
             setFlash('error', 'Event not found.');
             redirect(APP_URL . '/index.php?page=events');
         }
-<<<<<<< HEAD
-        // Load event reviews and statistics
-        $avgRating = $eventModel->getAvgRating($id);
-        $reviews = $eventModel->getReviews($id);
-
-        // Calculate booking information
-        $seatPercent = $event['max_capacity'] > 0 ? round(($event['max_capacity'] - $event['available_seats']) / $event['max_capacity'] * 100) : 0;
-        $maxBookable = min(5, $event['available_seats']);
-
-=======
         $avgRating = $eventModel->getAvgRating($id);
         $reviews = $eventModel->getReviews($id);
         $seatPercent = $event['max_capacity'] > 0 ? round(($event['max_capacity'] - $event['available_seats']) / $event['max_capacity'] * 100) : 0;
         $maxBookable = min(5, $event['available_seats']);
 
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
         require_once __DIR__ . '/../views/layouts/header.php';
         require_once __DIR__ . '/../views/events/detail.php';
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-<<<<<<< HEAD
-    // Organizer creates a new event
-=======
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
     public function create(): void {
         requireRole('organizer');
         $pageTitle = 'Create Event';
         $hideNav = true;
         $errors = [];
-<<<<<<< HEAD
 
-         // Handle form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // CSRF security validation
             if (!validateCSRF()) { setFlash('error', 'Invalid request.'); redirect(APP_URL . '/index.php?page=organizer/create'); }
-            // Collect form data
             $data = [
                 'organizer_id' => currentUserId(),
                 'title' => trim($_POST['title'] ?? ''),
@@ -122,7 +72,7 @@ class EventController {
                 'ticket_price' => (float)($_POST['ticket_price'] ?? 0),
                 'cover_image' => null,
             ];
-            // Validate input fields
+
             if (!$data['title']) $errors[] = 'Title is required.';
             if (!$data['description']) $errors[] = 'Description is required.';
             if (!in_array($data['category'], ['Concert','Conference','Workshop','Webinar','Sports','Festival','Exhibition','Networking','Music Events','Football','Cricket'])) $errors[] = 'Invalid category.';
@@ -136,7 +86,6 @@ class EventController {
             $commissionNote = trim($_POST['commission_note'] ?? '');
             if ($commissionPercent < 0 || $commissionPercent > 100) $errors[] = 'Commission must be between 0 and 100.';
 
-            // Handle image upload
             if (!empty($_FILES['cover_image']['name'])) {
                 $uploadError = '';
                 $img = uploadImage($_FILES['cover_image'], $uploadError);
@@ -144,52 +93,12 @@ class EventController {
                 else { $errors[] = $uploadError; }
             }
 
-            // Save event if no validation errors
             if (empty($errors)) {
                 $eventModel = new Event();
                 $eventId = $eventModel->create($data);
-                 // Create commission negotiation entry
                 (new EventNegotiation())->createForEvent($eventId, $commissionPercent, $commissionNote !== '' ? $commissionNote : null);
                 setFlash('success', 'Event submitted! Your commission offer is awaiting admin response.');
                 redirect(APP_URL . '/index.php?page=organizer/commission');
-=======
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!validateCSRF()) { setFlash('error', 'Invalid request.'); redirect(APP_URL . '/index.php?page=organizer/create'); }
-            $data = [
-                'organizer_id' => currentUserId(),
-                'title' => trim($_POST['title'] ?? ''),
-                'description' => trim($_POST['description'] ?? ''),
-                'category' => $_POST['category'] ?? '',
-                'event_date' => $_POST['event_date'] ?? '',
-                'event_time' => $_POST['event_time'] ?? '',
-                'venue' => trim($_POST['venue'] ?? ''),
-                'max_capacity' => (int)($_POST['max_capacity'] ?? 0),
-                'ticket_price' => (float)($_POST['ticket_price'] ?? 0),
-                'cover_image' => null,
-            ];
-
-            if (!$data['title']) $errors[] = 'Title is required.';
-            if (!$data['description']) $errors[] = 'Description is required.';
-            if (!in_array($data['category'], ['Concert','Conference','Workshop','Webinar','Sports','Festival','Exhibition','Networking','Music Events','Football','Cricket'])) $errors[] = 'Invalid category.';
-            if (!$data['event_date']) $errors[] = 'Date is required.';
-            if (!$data['event_time']) $errors[] = 'Time is required.';
-            if (!$data['venue']) $errors[] = 'Venue is required.';
-            if ($data['max_capacity'] < 1) $errors[] = 'Capacity must be at least 1.';
-            if ($data['ticket_price'] <= 0) $errors[] = 'Price must be greater than 0.';
-
-            if (!empty($_FILES['cover_image']['name'])) {
-                $uploadError = '';
-                $img = uploadImage($_FILES['cover_image'], $uploadError);
-                if ($img) { $data['cover_image'] = $img; }
-                else { $errors[] = $uploadError; }
-            }
-
-            if (empty($errors)) {
-                $eventModel = new Event();
-                $eventModel->create($data);
-                setFlash('success', 'Event created! It will be visible after admin approval.');
-                redirect(APP_URL . '/index.php?page=organizer/dashboard');
             }
         }
 
@@ -197,6 +106,7 @@ class EventController {
             ['url' => APP_URL . '/index.php?page=organizer/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
             ['url' => APP_URL . '/index.php?page=organizer/create', 'icon' => 'add_circle', 'label' => 'Create Event', 'active' => true],
             ['url' => APP_URL . '/index.php?page=organizer/events', 'icon' => 'event', 'label' => 'My Events'],
+            ['url' => APP_URL . '/index.php?page=organizer/commission', 'icon' => 'handshake', 'label' => 'Commissions'],
             ['url' => APP_URL . '/index.php', 'icon' => 'explore', 'label' => 'Browse Events'],
         ];
         require_once __DIR__ . '/../views/layouts/header.php';
@@ -244,6 +154,7 @@ class EventController {
             ['url' => APP_URL . '/index.php?page=organizer/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
             ['url' => APP_URL . '/index.php?page=organizer/create', 'icon' => 'add_circle', 'label' => 'Create Event'],
             ['url' => APP_URL . '/index.php?page=organizer/events', 'icon' => 'event', 'label' => 'My Events', 'active' => true],
+            ['url' => APP_URL . '/index.php?page=organizer/commission', 'icon' => 'handshake', 'label' => 'Commissions'],
             ['url' => APP_URL . '/index.php', 'icon' => 'explore', 'label' => 'Browse Events'],
         ];
         require_once __DIR__ . '/../views/layouts/header.php';
@@ -266,183 +177,6 @@ class EventController {
         redirect(APP_URL . '/index.php?page=organizer/dashboard');
     }
 
-    public function approve(): void {
-        requireRole('admin');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRF()) {
-            $id = (int)($_POST['event_id'] ?? 0);
-            $action = $_POST['action'] ?? '';
-            $eventModel = new Event();
-            if ($action === 'approve') {
-                $eventModel->setStatus($id, 'published');
-                setFlash('success', 'Event approved.');
-            } elseif ($action === 'reject') {
-                $eventModel->setStatus($id, 'cancelled');
-                setFlash('success', 'Event rejected.');
-            }
-        }
-        redirect($_SERVER['HTTP_REFERER'] ?? APP_URL . '/index.php?page=admin/dashboard');
-    }
-
-    public function deleteAdmin(): void {
-        requireRole('admin');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRF()) {
-            (new Event())->delete((int)($_POST['event_id'] ?? 0));
-            setFlash('success', 'Event deleted.');
-        }
-        redirect($_SERVER['HTTP_REFERER'] ?? APP_URL . '/index.php?page=admin/events');
-    }
-
-    public function toggleUser(): void {
-        requireRole('admin');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRF()) {
-            $id = (int)($_POST['user_id'] ?? 0);
-            require_once __DIR__ . '/../models/User.php';
-            (new User())->toggleStatus($id);
-            setFlash('success', 'User status updated.');
-        }
-        redirect(APP_URL . '/index.php?page=admin/users');
-    }
-
-  public function editAdmin(): void {
-    requireRole('admin');
-    $pageTitle = 'Edit Event';
-    $hideNav = true;
-
-    $eventModel = new Event();
-    $id = (int)($_GET['id'] ?? 0);
-    $event = $eventModel->findById($id);
-
-    if (!$event) {
-        setFlash('error', 'Event not found.');
-        redirect(APP_URL . '/index.php?page=admin/events');
-    }
-
-    $errors = [];
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (!validateCSRF()) {
-            setFlash('error', 'Invalid request.');
-            redirect(APP_URL . '/index.php?page=admin/edit_event&id=' . $id);
-        }
-
-        $data = [
-            'title' => trim($_POST['title'] ?? ''),
-            'description' => trim($_POST['description'] ?? ''),
-            'category' => $_POST['category'] ?? '',
-            'event_date' => $_POST['event_date'] ?? '',
-            'event_time' => $_POST['event_time'] ?? '',
-            'venue' => trim($_POST['venue'] ?? ''),
-            'max_capacity' => (int)($_POST['max_capacity'] ?? 0),
-            'ticket_price' => (float)($_POST['ticket_price'] ?? 0),
-            'cover_image' => $event['cover_image'] ?? null,
-        ];
-
-        if (!$data['title']) $errors[] = 'Title is required.';
-        if (!$data['description']) $errors[] = 'Description is required.';
-        if (!in_array($data['category'], ['Concert','Conference','Workshop','Webinar','Sports','Festival','Exhibition','Networking','Music Events','Football','Cricket'])) $errors[] = 'Invalid category.';
-        if (!$data['event_date']) $errors[] = 'Date is required.';
-        if (!$data['event_time']) $errors[] = 'Time is required.';
-        if (!$data['venue']) $errors[] = 'Venue is required.';
-        if ($data['max_capacity'] < 1) $errors[] = 'Capacity must be at least 1.';
-        if ($data['ticket_price'] <= 0) $errors[] = 'Price must be greater than 0.';
-
-        if (!empty($_FILES['cover_image']['name'])) {
-            $uploadError = '';
-            $img = uploadImage($_FILES['cover_image'], $uploadError);
-            if ($img) {
-                $data['cover_image'] = $img;
-            } else {
-                $errors[] = $uploadError;
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
-            }
-        }
-
-        // Organizer sidebar menu
-        $sidebarLinks = [
-            ['url' => APP_URL . '/index.php?page=organizer/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
-            ['url' => APP_URL . '/index.php?page=organizer/create', 'icon' => 'add_circle', 'label' => 'Create Event', 'active' => true],
-            ['url' => APP_URL . '/index.php?page=organizer/events', 'icon' => 'event', 'label' => 'My Events'],
-            ['url' => APP_URL . '/index.php?page=organizer/commission', 'icon' => 'handshake', 'label' => 'Commissions'],
-            ['url' => APP_URL . '/index.php', 'icon' => 'explore', 'label' => 'Browse Events'],
-        ];
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/layouts/sidebar_organizer.php';
-        require_once __DIR__ . '/../views/events/create.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
-    }
-
-    // Organizer edits existing event
-    public function edit(): void {
-        requireRole('organizer');
-        $pageTitle = 'Edit Event';
-        $hideNav = true;
-        $eventModel = new Event();
-        $id = (int)($_GET['id'] ?? 0);
-        $event = $eventModel->findById($id);
-
-        // Check event ownership
-        if (!$event || $event['organizer_id'] != currentUserId()) {
-            setFlash('error', 'Event not found.');
-            redirect(APP_URL . '/index.php?page=organizer/dashboard');
-        }
-
-        $errors = [];
-
-        // Process update form
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!validateCSRF()) { setFlash('error', 'Invalid request.'); redirect(APP_URL . '/index.php?page=organizer/edit&id=' . $id); }
-            // Updated event data
-            $data = [
-                'title' => trim($_POST['title'] ?? ''), 'description' => trim($_POST['description'] ?? ''),
-                'category' => $_POST['category'] ?? '', 'event_date' => $_POST['event_date'] ?? '',
-                'event_time' => $_POST['event_time'] ?? '', 'venue' => trim($_POST['venue'] ?? ''),
-                'max_capacity' => (int)($_POST['max_capacity'] ?? 0), 'ticket_price' => (float)($_POST['ticket_price'] ?? 0),
-                'cover_image' => null,
-            ];
-            if (!$data['title']) $errors[] = 'Title is required.';
-
-            // Upload new image if available
-            if (!empty($_FILES['cover_image']['name'])) {
-                $uploadError = '';
-                $img = uploadImage($_FILES['cover_image'], $uploadError);
-                if ($img) $data['cover_image'] = $img; else $errors[] = $uploadError;
-            }
-            if (empty($errors)) {
-                $eventModel->update($id, $data);
-                setFlash('success', 'Event updated.');
-                redirect(APP_URL . '/index.php?page=organizer/dashboard');
-            }
-        }
-
-        $sidebarLinks = [
-            ['url' => APP_URL . '/index.php?page=organizer/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
-            ['url' => APP_URL . '/index.php?page=organizer/create', 'icon' => 'add_circle', 'label' => 'Create Event'],
-            ['url' => APP_URL . '/index.php?page=organizer/events', 'icon' => 'event', 'label' => 'My Events', 'active' => true],
-            ['url' => APP_URL . '/index.php?page=organizer/commission', 'icon' => 'handshake', 'label' => 'Commissions'],
-            ['url' => APP_URL . '/index.php', 'icon' => 'explore', 'label' => 'Browse Events'],
-        ];
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/layouts/sidebar_organizer.php';
-        require_once __DIR__ . '/../views/events/create.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
-    }
-
-    // Organizer deletes their own event
-    public function deleteOrganizer(): void {
-        requireRole('organizer');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRF()) {
-            $id = (int)($_POST['event_id'] ?? 0);
-            $eventModel = new Event();
-            $event = $eventModel->findById($id);
-            if ($event && $event['organizer_id'] == currentUserId()) {
-                $eventModel->delete($id);
-                setFlash('success', 'Event deleted.');
-            }
-        }
-        redirect(APP_URL . '/index.php?page=organizer/dashboard');
-    }
-
-    // Admin approves or rejects events
     public function approve(): void {
         requireRole('admin');
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && validateCSRF()) {
@@ -465,7 +199,6 @@ class EventController {
         redirect(APP_URL . '/index.php?page=admin/events');
     }
 
-    
     public function adminCommission(): void {
         requireRole('admin');
         $pageTitle = 'Commission Negotiations';
@@ -582,7 +315,7 @@ class EventController {
         }
         redirect(APP_URL . '/index.php?page=admin/users');
     }
-// Admin dashboard statistics page
+
     public function adminDashboard(): void {
         requireRole('admin');
         $pageTitle = 'Admin Dashboard';
@@ -660,15 +393,12 @@ class EventController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // Organizer dashboard page
     public function organizerDashboard(): void {
         requireRole('organizer');
         $pageTitle = 'Organizer Dashboard';
         $hideNav = true;
         $bookingModel = new Booking();
         $eventModel = new Event();
-
-        // Load organizer statistics and events
         $stats = $bookingModel->organizerStats(currentUserId());
         $events = $eventModel->getByOrganizer(currentUserId());
 
@@ -685,115 +415,8 @@ class EventController {
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
-    // Redirect organizer to dashboard
     public function organizerHome(): void {
         requireRole('organizer');
         redirect(APP_URL . '/index.php?page=organizer/dashboard');
     }
 }
-<<<<<<< HEAD
-=======
-
-    // Approve event
-    public function approve(): void
-    {
-        requireRole('admin');
-        $pageTitle = 'Admin Dashboard';
-        $hideNav = true;
-        $bookingModel = new Booking();
-        $eventModel = new Event();
-        $stats = $bookingModel->adminStats();
-        $pending = $eventModel->getPending();
-
-        $sidebarLinks = [
-            ['url' => APP_URL . '/index.php?page=admin/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard', 'active' => true],
-            ['url' => APP_URL . '/index.php?page=admin/users', 'icon' => 'group', 'label' => 'Manage Users'],
-            ['url' => APP_URL . '/index.php?page=admin/events', 'icon' => 'event', 'label' => 'Manage Events'],
-            ['url' => APP_URL . '/index.php?page=admin/bookings', 'icon' => 'confirmation_number', 'label' => 'All Bookings'],
-            ['url' => APP_URL . '/index.php?page=admin/revenue', 'icon' => 'bar_chart', 'label' => 'Revenue Report'],
-        ];
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/layouts/sidebar_admin.php';
-        require_once __DIR__ . '/../views/admin/dashboard.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
-    }
-
-    public function adminEvents(): void {
-        requireRole('admin');
-        $pageTitle = 'Manage Events';
-        $hideNav = true;
-        $eventModel = new Event();
-        $search = trim($_GET['search'] ?? '');
-        $category = $_GET['category'] ?? '';
-        $status = $_GET['status'] ?? '';
-        $page = max(1, (int)($_GET['p'] ?? 1));
-        $total = $eventModel->countAllAdmin($search, $category, $status);
-        $pg = paginate($total, 20, $page);
-        $events = $eventModel->getAllAdmin($search, $category, $status, $pg['per_page'], $pg['offset']);
-
-        $sidebarLinks = [
-            ['url' => APP_URL . '/index.php?page=admin/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
-            ['url' => APP_URL . '/index.php?page=admin/users', 'icon' => 'group', 'label' => 'Manage Users'],
-            ['url' => APP_URL . '/index.php?page=admin/events', 'icon' => 'event', 'label' => 'Manage Events', 'active' => true],
-            ['url' => APP_URL . '/index.php?page=admin/bookings', 'icon' => 'confirmation_number', 'label' => 'All Bookings'],
-            ['url' => APP_URL . '/index.php?page=admin/revenue', 'icon' => 'bar_chart', 'label' => 'Revenue Report'],
-        ];
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/layouts/sidebar_admin.php';
-        require_once __DIR__ . '/../views/admin/events.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
-    }
-
-    public function adminUsers(): void {
-        requireRole('admin');
-        $pageTitle = 'Manage Users';
-        $hideNav = true;
-        require_once __DIR__ . '/../models/User.php';
-        $userModel = new User();
-        $search = trim($_GET['search'] ?? '');
-        $role = $_GET['role'] ?? '';
-        $page = max(1, (int)($_GET['p'] ?? 1));
-        $total = $userModel->countAll($search, $role);
-        $pg = paginate($total, 20, $page);
-        $users = $userModel->getAll($search, $role, $pg['per_page'], $pg['offset']);
-
-        $sidebarLinks = [
-            ['url' => APP_URL . '/index.php?page=admin/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard'],
-            ['url' => APP_URL . '/index.php?page=admin/users', 'icon' => 'group', 'label' => 'Manage Users', 'active' => true],
-            ['url' => APP_URL . '/index.php?page=admin/events', 'icon' => 'event', 'label' => 'Manage Events'],
-            ['url' => APP_URL . '/index.php?page=admin/bookings', 'icon' => 'confirmation_number', 'label' => 'All Bookings'],
-            ['url' => APP_URL . '/index.php?page=admin/revenue', 'icon' => 'bar_chart', 'label' => 'Revenue Report'],
-        ];
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/layouts/sidebar_admin.php';
-        require_once __DIR__ . '/../views/admin/users.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
-    }
-
-    public function organizerDashboard(): void {
-        requireRole('organizer');
-        $pageTitle = 'Organizer Dashboard';
-        $hideNav = true;
-        $bookingModel = new Booking();
-        $eventModel = new Event();
-        $stats = $bookingModel->organizerStats(currentUserId());
-        $events = $eventModel->getByOrganizer(currentUserId());
-
-        $sidebarLinks = [
-            ['url' => APP_URL . '/index.php?page=organizer/dashboard', 'icon' => 'dashboard', 'label' => 'Dashboard', 'active' => true],
-            ['url' => APP_URL . '/index.php?page=organizer/create', 'icon' => 'add_circle', 'label' => 'Create Event'],
-            ['url' => APP_URL . '/index.php?page=organizer/events', 'icon' => 'event', 'label' => 'My Events'],
-            ['url' => APP_URL . '/index.php', 'icon' => 'explore', 'label' => 'Browse Events'],
-        ];
-        require_once __DIR__ . '/../views/layouts/header.php';
-        require_once __DIR__ . '/../views/layouts/sidebar_organizer.php';
-        require_once __DIR__ . '/../views/organizer/dashboard.php';
-        require_once __DIR__ . '/../views/layouts/footer.php';
-    }
-
-    public function organizerHome(): void {
-        requireRole('organizer');
-        redirect(APP_URL . '/index.php?page=organizer/dashboard');
-    }
-}
->>>>>>> 42972f197d9d0848dff370115fbc201c33c82d4d
