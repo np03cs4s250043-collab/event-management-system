@@ -67,6 +67,21 @@ switch ($page) {
         (new AuthController())->logout();
         break;
 
+    case 'forgot-password':
+        require_once __DIR__ . '/controllers/AuthController.php';
+        (new AuthController())->forgotPasswordPage();
+        break;
+
+    case 'verify-otp':
+        require_once __DIR__ . '/controllers/AuthController.php';
+        (new AuthController())->verifyOtpPage();
+        break;
+
+    case 'reset-password':
+        require_once __DIR__ . '/controllers/AuthController.php';
+        (new AuthController())->resetPasswordPage();
+        break;
+
     // ── Booking flow ─────────────────────────
     case 'checkout':
         require_once __DIR__ . '/controllers/BookingController.php';
