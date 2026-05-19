@@ -6,7 +6,7 @@
         <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.5rem">Redirecting to eSewa</h2>
         <p style="color:var(--secondary);margin-bottom:2rem;font-size:0.9rem">Please wait while we redirect you securely to eSewa to complete your payment.</p>
 
-        <form id="esewaForm" method="POST" action="<?= EsewaHelper::PAYMENT_URL ?>">
+        <form id="esewaForm" method="POST" action="<?= EsewaHelper::getPaymentUrl() ?>">
             <?php foreach ($esewaData as $key => $value): ?>
                 <input type="hidden" name="<?= h($key) ?>" value="<?= h((string)$value) ?>">
             <?php endforeach; ?>

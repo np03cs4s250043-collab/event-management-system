@@ -88,13 +88,13 @@ class BookingController {
             'tax_amount'              => '0',
             'total_amount'            => $totalAmount,
             'transaction_uuid'        => $bookingRef,
-            'product_code'            => EsewaHelper::MERCHANT_CODE,
+            'product_code'            => EsewaHelper::getMerchantCode(),
             'product_service_charge'  => '0',
             'product_delivery_charge' => '0',
             'success_url'             => APP_URL . '/index.php?page=esewa/success',
             'failure_url'             => APP_URL . '/index.php?page=esewa/failure',
             'signed_field_names'      => 'total_amount,transaction_uuid,product_code',
-            'signature'               => EsewaHelper::signature($totalAmount, $bookingRef, EsewaHelper::MERCHANT_CODE),
+            'signature'               => EsewaHelper::signature($totalAmount, $bookingRef, EsewaHelper::getMerchantCode()),
         ];
 
         $pageTitle = 'Redirecting to eSewa';
@@ -136,7 +136,7 @@ class BookingController {
         $totalAmount = $data['total_amount'];
         $txnCode     = $data['transaction_code'] ?? ('ESW-' . $txnUuid);
 
-        if (!EsewaHelper::checkStatus($txnUuid, $totalAmount, EsewaHelper::MERCHANT_CODE)) {
+        if (!EsewaHelper::checkStatus($txnUuid, $totalAmount, EsewaHelper::getMerchantCode())) {
             error_log("eSewa success: status API did not return COMPLETE for {$txnUuid}");
             setFlash('error', 'Payment not verified by eSewa. Please contact support.');
             redirect(APP_URL . '/index.php?page=events');

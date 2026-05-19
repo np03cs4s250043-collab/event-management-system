@@ -3,15 +3,36 @@
  * eSewa v2 Payment Helper
  * Docs: https://developer.esewa.com.np/
  *
- * For production, update MERCHANT_CODE, SECRET_KEY, and PAYMENT_URL.
+ * Sandbox defaults are used automatically in development.
+ * For production, define these constants in config/secrets.php:
+ *   define('ESEWA_MERCHANT_CODE', 'YOUR_CODE');
+ *   define('ESEWA_SECRET_KEY',    'YOUR_SECRET');
+ *   define('ESEWA_PAYMENT_URL',   'https://epay.esewa.com.np/api/epay/main/v2/form');
+ *   define('ESEWA_STATUS_URL',    'https://epay.esewa.com.np/api/epay/transaction/status/');
  */
 class EsewaHelper {
 
-    // ── Sandbox / test credentials ─────────────────────────────────────────
+    // ── Fallback sandbox credentials (overridden by secrets.php in production) ─
     const MERCHANT_CODE = 'EPAYTEST';
     const SECRET_KEY    = '8gBm/:&EnhH.1/q';
     const PAYMENT_URL   = 'https://rc-epay.esewa.com.np/api/epay/main/v2/form';
     const STATUS_URL    = 'https://rc-epay.esewa.com.np/api/epay/transaction/status/';
+
+    public static function getMerchantCode(): string {
+        return defined('ESEWA_MERCHANT_CODE') ? ESEWA_MERCHANT_CODE : self::MERCHANT_CODE;
+    }
+
+    public static function getSecretKey(): string {
+        return defined('ESEWA_SECRET_KEY') ? ESEWA_SECRET_KEY : self::SECRET_KEY;
+    }
+
+    public static function getPaymentUrl(): string {
+        return defined('ESEWA_PAYMENT_URL') ? ESEWA_PAYMENT_URL : self::PAYMENT_URL;
+    }
+
+    public static function getStatusUrl(): string {
+        return defined('ESEWA_STATUS_URL') ? ESEWA_STATUS_URL : self::STATUS_URL;
+    }
 
     /**
      * Generate HMAC-SHA256 signature for payment initiation.
@@ -19,7 +40,7 @@ class EsewaHelper {
      */
     public static function signature(string $totalAmount, string $uuid, string $productCode): string {
         $message = "total_amount={$totalAmount},transaction_uuid={$uuid},product_code={$productCode}";
-        return base64_encode(hash_hmac('sha256', $message, self::SECRET_KEY, true));
+        return base64_encode(hash_hmac('sha256', $message, self::getSecretKey(), true));
     }
 
     /**
@@ -39,7 +60,7 @@ class EsewaHelper {
             $parts[] = "{$field}={$data[$field]}";
         }
         $message  = implode(',', $parts);
-        $expected = base64_encode(hash_hmac('sha256', $message, self::SECRET_KEY, true));
+        $expected = base64_encode(hash_hmac('sha256', $message, self::getSecretKey(), true));
         return hash_equals($expected, $data['signature']);
     }
 
@@ -51,7 +72,7 @@ class EsewaHelper {
      * by verifyResponse(), which is cryptographically sufficient.
      */
     public static function checkStatus(string $uuid, string $totalAmount, string $productCode): bool {
-        $url = rtrim(self::STATUS_URL, '/') . '?' . http_build_query([
+        $url = rtrim(self::getStatusUrl(), '/') . '?' . http_build_query([
             'product_code'     => $productCode,
             'total_amount'     => $totalAmount,
             'transaction_uuid' => $uuid,
@@ -59,11 +80,12 @@ class EsewaHelper {
 
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
+            $isProd = defined('APP_ENV') && APP_ENV !== 'development';
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_TIMEOUT        => 10,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => 0,
+                CURLOPT_SSL_VERIFYPEER => $isProd,
+                CURLOPT_SSL_VERIFYHOST => $isProd ? 2 : 0,
                 CURLOPT_HTTPHEADER     => ['Accept: application/json'],
             ]);
             $res  = curl_exec($ch);

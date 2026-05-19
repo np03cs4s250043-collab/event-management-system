@@ -5,6 +5,10 @@ config/secrets.php
 public/uploads/*
 !public/uploads/.gitkeep
 
+# Composer
+vendor/
+composer.phar
+
 # OS / editor noise
 .DS_Store
 Thumbs.db

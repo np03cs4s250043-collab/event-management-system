@@ -43,6 +43,23 @@
                 <span class="material-symbols-outlined" style="font-size:0.875rem;vertical-align:middle">lock</span>
                 You will be redirected to eSewa to complete the payment securely.
             </p>
+
+            <div style="display:flex;align-items:center;gap:0.75rem;margin:1.5rem 0">
+                <hr style="flex:1;border:none;border-top:1px solid rgba(0,0,0,0.08)">
+                <span style="font-size:0.75rem;color:var(--secondary)">or</span>
+                <hr style="flex:1;border:none;border-top:1px solid rgba(0,0,0,0.08)">
+            </div>
+
+            <form action="<?= APP_URL ?>/index.php?page=checkout" method="POST">
+                <?= csrfField() ?>
+                <input type="hidden" name="event_id" value="<?= $eventId ?>">
+                <input type="hidden" name="quantity" value="<?= $qty ?>">
+                <input type="hidden" name="confirm_booking" value="1">
+                <button type="submit" style="width:100%;padding:0.875rem;font-size:0.9rem;font-weight:600;background:transparent;color:var(--secondary);border:1.5px solid rgba(0,0,0,0.15);border-radius:0.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem">storefront</span>
+                    Pay at Venue (Cash / Direct)
+                </button>
+            </form>
         </div>
     </div>
 </section>
