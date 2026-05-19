@@ -25,7 +25,7 @@
             <div class="form-group">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.375rem">
                     <label for="password" style="margin-bottom:0">Password</label>
-                    <a href="#" style="color:var(--color-coral);font-weight:600;font-size:.75rem;text-decoration:none">Forgot password?</a>
+                    <a href="<?= APP_URL ?>/index.php?page=forgot-password" style="color:var(--color-coral);font-weight:600;font-size:.75rem;text-decoration:none">Forgot password?</a>
                 </div>
                 <div class="input-icon password-field">
                     <span class="material-symbols-outlined">lock</span>

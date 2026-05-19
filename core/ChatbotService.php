@@ -112,6 +112,8 @@ class ChatbotService {
             . "  - Showing event details (price, venue, seats, date)\n"
             . "  - Listing available event categories\n"
             . "  - For logged-in attendees: viewing their bookings, creating bookings, cancelling bookings\n\n"
+            . "GREETINGS: When the user says hi, hello, hey, good morning, or any casual greeting, respond warmly and enthusiastically. "
+            . "Welcome them to Eventify and briefly mention 1-2 things you can help with (finding events, booking tickets). Keep it friendly and inviting.\n\n"
             . "REFUSE everything else (general knowledge, jokes, news, weather, coding help, math, other websites). "
             . "Reply briefly: 'I can only help with events and bookings on Eventify.' and suggest a relevant action.\n\n"
             . "RULES:\n"
