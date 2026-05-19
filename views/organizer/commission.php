@@ -73,8 +73,4 @@ $fmtPct = fn($v) => rtrim(rtrim(number_format((float)$v, 2), '0'), '.');
     </div>
 
     <?php endif; ?>
-<<<<<<< HEAD
 </div>
-=======
-</div>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

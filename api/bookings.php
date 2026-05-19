@@ -193,8 +193,4 @@ switch ($method) {
 
     default:
         jsonResponse(405, ['error' => 'Method not allowed.']);
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

@@ -64,8 +64,4 @@ class User {
     public function totalUsers(): int {
         return (int) $this->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

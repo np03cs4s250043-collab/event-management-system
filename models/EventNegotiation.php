@@ -109,8 +109,4 @@ class EventNegotiation {
         $stmt->execute([$organizerId]);
         return $stmt->fetchAll();
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

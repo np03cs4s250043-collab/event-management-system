@@ -3,14 +3,11 @@
     <table class="data-table">
         <thead><tr><th>Ref</th><th>Event</th><th>Attendee</th><th>Category</th><th>Qty</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
         <tbody>
-<<<<<<< HEAD
-=======
         <?php if (empty($bookings)): ?>
         <tr>
             <td colspan="8" style="text-align:center;padding:2.5rem;color:var(--secondary);font-weight:600">No bookings yet.</td>
         </tr>
         <?php else: ?>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
         <?php foreach ($bookings as $b): ?>
         <tr>
             <td style="font-weight:600;font-family:monospace"><?= h($b['booking_ref']) ?></td>
@@ -23,17 +20,10 @@
             <td><?= date('M d, Y', strtotime($b['booked_at'])) ?></td>
         </tr>
         <?php endforeach; ?>
-<<<<<<< HEAD
-        </tbody>
-    </table>
-    <?php if ($pg['total_pages'] > 1): ?>
-    <div class="pagination"><?php for ($i = 1; $i <= $pg['total_pages']; $i++): ?><a href="<?= APP_URL ?>/index.php?page=admin/bookings&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a><?php endfor; ?></div>
-=======
         <?php endif; ?>
         </tbody>
     </table>
     <?php if ($pg['total_pages'] > 1): ?>
-    <div class="pagination"><?php for ($i = 1; $i <= $pg['total_pages']; $i++): ?><a href="?page=admin/bookings&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a><?php endfor; ?></div>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
+    <div class="pagination"><?php for ($i = 1; $i <= $pg['total_pages']; $i++): ?><a href="<?= APP_URL ?>/index.php?page=admin/bookings&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a><?php endfor; ?></div>
     <?php endif; ?>
 </div>
