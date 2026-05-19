@@ -42,9 +42,9 @@
             </div>
         </form>
         <div style="text-align:center;margin-top:2rem">
-            <p style="font-size:0.875rem;color:var(--secondary)">New to the premiere? <a
+            <p style="font-size:0.875rem;color:var(--secondary)">Don't have an account? <a
                     href="<?= APP_URL ?>/index.php?page=register"
-                    style="color:var(--primary);font-weight:700;text-decoration:none">Register</a></p>
+                    style="color:var(--primary);font-weight:700;text-decoration:none">Signup</a></p>
         </div>
         <div style="text-align:center;margin-top:1rem">
             <a href="<?= APP_URL ?>/index.php"
