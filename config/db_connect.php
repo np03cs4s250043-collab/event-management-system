@@ -6,7 +6,8 @@ define('DB_USER',    'root');
 define('DB_PASS',    '');
 define('DB_CHARSET', 'utf8mb4');
 
-define('BASE_PATH', '/event-management-system/git');
+define('BASE_PATH', '/event-management-system');
+define('SESSION_LIFETIME', 1800);
 
 function getDB(): PDO
 {

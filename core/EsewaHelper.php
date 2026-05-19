@@ -51,8 +51,6 @@ class EsewaHelper {
      * by verifyResponse(), which is cryptographically sufficient.
      */
     public static function checkStatus(string $uuid, string $totalAmount, string $productCode): bool {
-
-        // Build status check URL
         $url = rtrim(self::STATUS_URL, '/') . '?' . http_build_query([
             'product_code'     => $productCode,
             'total_amount'     => $totalAmount,
@@ -71,8 +69,6 @@ class EsewaHelper {
             $res  = curl_exec($ch);
             $err  = curl_error($ch);
             curl_close($ch);
-
-            // Fallback if request fails
             if ($res === false) {
                 error_log("eSewa status check failed ({$uuid}): {$err} — falling back to signature trust");
                 return true; // signature already validated upstream
@@ -80,18 +76,13 @@ class EsewaHelper {
         } else {
             $ctx = stream_context_create(['http' => ['timeout' => 10, 'ignore_errors' => true]]);
             $res = @file_get_contents($url, false, $ctx);
-
-            // Fallback if request fails
             if ($res === false) {
                 error_log("eSewa status check failed ({$uuid}): file_get_contents error — falling back to signature trust");
                 return true;
             }
         }
 
-        // Decode JSON response
         $json = json_decode($res, true);
-
-        // Return true if payment is complete
         return isset($json['status']) && $json['status'] === 'COMPLETE';
     }
 }
