@@ -5,22 +5,21 @@ require_once __DIR__ . '/../models/Event.php';
 require_once __DIR__ . '/../models/Booking.php';
 
 /**
- * ChatbotService — wraps Google Gemini with Eventify-scoped tools.
+ * ChatbotService — wraps Groq (OpenAI-compatible) with Eventify-scoped tools.
  *
  * Conversation is stateless: caller passes the full message history each turn.
- * Tool calls are executed server-side against existing models, and results
- * are looped back to Gemini until it returns a final text reply.
+ * Tool calls are executed server-side and looped back until a final text reply.
  */
 class ChatbotService {
 
     private string $apiKey;
     private string $model;
-    private const MAX_TOOL_TURNS = 6; // safety cap on tool-call loops
-    private const MAX_HISTORY    = 20; // last N user/assistant messages
+    private const MAX_TOOL_TURNS = 6;
+    private const MAX_HISTORY    = 20;
 
     public function __construct() {
-        $this->apiKey = GEMINI_API_KEY;
-        $this->model  = GEMINI_MODEL;
+        $this->apiKey = GROQ_API_KEY;
+        $this->model  = GROQ_MODEL;
     }
 
     /**
@@ -29,95 +28,71 @@ class ChatbotService {
      */
     public function chat(array $messages, ?int $userId, ?string $role): array {
         if (!$this->apiKey) {
-            return ['reply' => 'The chatbot is not configured. Admin: set GEMINI_API_KEY.', 'proposal' => null, 'login_required' => false];
+            return ['reply' => 'The chatbot is not configured. Admin: set GROQ_API_KEY.', 'proposal' => null, 'login_required' => false];
         }
 
         $isLoggedIn = $userId !== null && $role === 'attendee';
-        $contents   = $this->buildContents($messages);
+        $msgs       = $this->buildMessages($messages, $userId, $role);
         $tools      = $this->getToolDefinitions($isLoggedIn);
-        $system     = $this->buildSystemPrompt($userId, $role);
 
         $proposal = null;
 
         for ($turn = 0; $turn < self::MAX_TOOL_TURNS; $turn++) {
-            $resp = $this->callGemini($contents, $tools, $system);
+            $resp = $this->callGroq($msgs, $tools);
 
             if (isset($resp['error'])) {
                 return ['reply' => 'Sorry, I hit an error: ' . $resp['error'], 'proposal' => null, 'login_required' => false];
             }
 
-            $candidate = $resp['candidates'][0] ?? null;
-            if (!$candidate) {
+            $choice = $resp['choices'][0] ?? null;
+            if (!$choice) {
                 return ['reply' => 'No response from the assistant. Please try again.', 'proposal' => null, 'login_required' => false];
             }
 
-            $parts = $candidate['content']['parts'] ?? [];
-            $functionCalls = [];
-            $textParts = [];
-            foreach ($parts as $part) {
-                if (isset($part['functionCall'])) {
-                    $functionCalls[] = $part['functionCall'];
-                } elseif (isset($part['text'])) {
-                    $textParts[] = $part['text'];
-                }
+            $assistantMsg = $choice['message'];
+            $toolCalls    = $assistantMsg['tool_calls'] ?? [];
+            $textContent  = $assistantMsg['content'] ?? '';
+
+            // No tool calls — model is done; return its text.
+            if (empty($toolCalls)) {
+                return ['reply' => trim((string) $textContent) ?: '...', 'proposal' => $proposal, 'login_required' => false];
             }
 
-            // No tool calls — Gemini is done; return its text.
-            if (empty($functionCalls)) {
-                $reply = trim(implode("\n", $textParts));
-                return ['reply' => $reply ?: '...', 'proposal' => $proposal, 'login_required' => false];
-            }
+            // Add assistant message (with tool_calls) to history.
+            $msgs[] = $assistantMsg;
 
-            // Echo the model's parts back, but normalise empty `args` to a JSON object
-            // (PHP encodes empty arrays as `[]` which Gemini rejects — `args` must be a Struct).
-            $normalizedModelParts = [];
-            foreach ($parts as $part) {
-                if (isset($part['functionCall'])) {
-                    $fc = $part['functionCall'];
-                    $callArgs = $fc['args'] ?? null;
-                    if (!is_array($callArgs) || $callArgs === []) {
-                        $callArgs = new stdClass();
-                    }
-                    $normalizedModelParts[] = ['functionCall' => ['name' => $fc['name'] ?? '', 'args' => $callArgs]];
-                } elseif (isset($part['text'])) {
-                    $normalizedModelParts[] = ['text' => $part['text']];
-                }
-            }
-            $contents[] = ['role' => 'model', 'parts' => $normalizedModelParts];
-
-            $responseParts = [];
-            foreach ($functionCalls as $call) {
-                $name = $call['name'] ?? '';
-                $args = $call['args'] ?? [];
+            // Execute each tool and append its response.
+            foreach ($toolCalls as $tc) {
+                $name   = $tc['function']['name'] ?? '';
+                $args   = json_decode($tc['function']['arguments'] ?? '{}', true) ?? [];
                 $result = $this->executeTool($name, $args, $userId, $isLoggedIn);
 
                 if ($name === 'propose_booking' && empty($result['error'])) {
                     $proposal = $result;
                 }
-                $responseParts[] = [
-                    'functionResponse' => [
-                        'name'     => $name,
-                        'response' => ['result' => $result],
-                    ],
+
+                $msgs[] = [
+                    'role'         => 'tool',
+                    'tool_call_id' => $tc['id'],
+                    'content'      => json_encode($result),
                 ];
             }
-            $contents[] = ['role' => 'user', 'parts' => $responseParts];
         }
 
         return ['reply' => 'I got stuck in a loop. Please rephrase your request.', 'proposal' => $proposal, 'login_required' => false];
     }
 
-    /** Build Gemini "contents" array from the chat history. */
-    private function buildContents(array $messages): array {
+    /** Build the messages array (system prompt first, then trimmed history). */
+    private function buildMessages(array $messages, ?int $userId, ?string $role): array {
+        $result  = [['role' => 'system', 'content' => $this->buildSystemPrompt($userId, $role)]];
         $trimmed = array_slice($messages, -self::MAX_HISTORY);
-        $contents = [];
         foreach ($trimmed as $msg) {
-            $role = ($msg['role'] ?? '') === 'assistant' ? 'model' : 'user';
+            $r    = ($msg['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
             $text = trim((string) ($msg['content'] ?? ''));
             if ($text === '') continue;
-            $contents[] = ['role' => $role, 'parts' => [['text' => $text]]];
+            $result[] = ['role' => $r, 'content' => $text];
         }
-        return $contents;
+        return $result;
     }
 
     private function buildSystemPrompt(?int $userId, ?string $role): string {
@@ -147,88 +122,109 @@ class ChatbotService {
             . "  5. If a tool returns an error, explain it plainly and suggest what the user can do.";
     }
 
-    /** Gemini-format tool declarations. Booking tools are omitted for guests. */
+    /** OpenAI-format tool declarations. Booking tools are omitted for guests. */
     private function getToolDefinitions(bool $isLoggedIn): array {
         $functions = [
             [
-                'name' => 'search_events',
-                'description' => 'Search published events. All filters are optional. Use this for "what events are happening", "concerts in Kathmandu", etc.',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'query'    => ['type' => 'string', 'description' => 'Free-text search across title/description/venue.'],
-                        'category' => ['type' => 'string', 'description' => 'Category name, e.g. "Concert", "Football".'],
-                        'limit'    => ['type' => 'integer', 'description' => 'Max results (default 10, max 20).'],
+                'type'     => 'function',
+                'function' => [
+                    'name'        => 'search_events',
+                    'description' => 'Search published events. All filters are optional. Use this for "what events are happening", "concerts in Kathmandu", etc.',
+                    'parameters'  => [
+                        'type'       => 'object',
+                        'properties' => [
+                            'query'    => ['type' => 'string',  'description' => 'Free-text search across title/description/venue.'],
+                            'category' => ['type' => 'string',  'description' => 'Category name, e.g. "Concert", "Football".'],
+                            'limit'    => ['type' => 'integer', 'description' => 'Max results (default 10, max 20).'],
+                        ],
                     ],
                 ],
             ],
             [
-                'name' => 'get_event_detail',
-                'description' => 'Get full details (price, available seats, description) for one event by id.',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'event_id' => ['type' => 'integer', 'description' => 'The event id from search_events results.'],
+                'type'     => 'function',
+                'function' => [
+                    'name'        => 'get_event_detail',
+                    'description' => 'Get full details (price, available seats, description) for one event by id.',
+                    'parameters'  => [
+                        'type'       => 'object',
+                        'properties' => [
+                            'event_id' => ['type' => 'integer', 'description' => 'The event id from search_events results.'],
+                        ],
+                        'required'   => ['event_id'],
                     ],
-                    'required' => ['event_id'],
                 ],
             ],
             [
-                'name' => 'list_categories',
-                'description' => 'List all event categories available on Eventify.',
-                'parameters' => ['type' => 'object', 'properties' => new stdClass()],
+                'type'     => 'function',
+                'function' => [
+                    'name'        => 'list_categories',
+                    'description' => 'List all event categories available on Eventify.',
+                    'parameters'  => ['type' => 'object', 'properties' => new stdClass()],
+                ],
             ],
         ];
 
         if ($isLoggedIn) {
             $functions[] = [
-                'name' => 'get_my_bookings',
-                'description' => "Fetch the current user's bookings.",
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'type' => ['type' => 'string', 'description' => "'upcoming' or 'past'. Default 'upcoming'."],
+                'type'     => 'function',
+                'function' => [
+                    'name'        => 'get_my_bookings',
+                    'description' => "Fetch the current user's bookings.",
+                    'parameters'  => [
+                        'type'       => 'object',
+                        'properties' => [
+                            'type' => ['type' => 'string', 'description' => "'upcoming' or 'past'. Default 'upcoming'."],
+                        ],
                     ],
                 ],
             ];
             $functions[] = [
-                'name' => 'propose_booking',
-                'description' => 'Validate seat availability and compute the total for a potential booking. Does NOT book yet — call this before create_booking.',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'event_id' => ['type' => 'integer'],
-                        'quantity' => ['type' => 'integer', 'description' => '1 to 5.'],
+                'type'     => 'function',
+                'function' => [
+                    'name'        => 'propose_booking',
+                    'description' => 'Validate seat availability and compute the total for a potential booking. Does NOT book yet — call this before create_booking.',
+                    'parameters'  => [
+                        'type'       => 'object',
+                        'properties' => [
+                            'event_id' => ['type' => 'integer'],
+                            'quantity' => ['type' => 'integer', 'description' => '1 to 5.'],
+                        ],
+                        'required'   => ['event_id', 'quantity'],
                     ],
-                    'required' => ['event_id', 'quantity'],
                 ],
             ];
             $functions[] = [
-                'name' => 'create_booking',
-                'description' => 'Actually create the booking. Only call AFTER the user has explicitly confirmed the proposal.',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'event_id' => ['type' => 'integer'],
-                        'quantity' => ['type' => 'integer'],
+                'type'     => 'function',
+                'function' => [
+                    'name'        => 'create_booking',
+                    'description' => 'Actually create the booking. Only call AFTER the user has explicitly confirmed the proposal.',
+                    'parameters'  => [
+                        'type'       => 'object',
+                        'properties' => [
+                            'event_id' => ['type' => 'integer'],
+                            'quantity' => ['type' => 'integer'],
+                        ],
+                        'required'   => ['event_id', 'quantity'],
                     ],
-                    'required' => ['event_id', 'quantity'],
                 ],
             ];
             $functions[] = [
-                'name' => 'cancel_booking',
-                'description' => 'Cancel a confirmed booking. Ask the user to confirm the booking_ref first.',
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'booking_id' => ['type' => 'integer', 'description' => 'The booking id from get_my_bookings.'],
+                'type'     => 'function',
+                'function' => [
+                    'name'        => 'cancel_booking',
+                    'description' => 'Cancel a confirmed booking. Ask the user to confirm the booking_ref first.',
+                    'parameters'  => [
+                        'type'       => 'object',
+                        'properties' => [
+                            'booking_id' => ['type' => 'integer', 'description' => 'The booking id from get_my_bookings.'],
+                        ],
+                        'required'   => ['booking_id'],
                     ],
-                    'required' => ['booking_id'],
                 ],
             ];
         }
 
-        return [['functionDeclarations' => $functions]];
+        return $functions;
     }
 
     /** Dispatch a tool call to the right handler. Always returns an array. */
@@ -270,15 +266,15 @@ class ChatbotService {
         $total  = $eventModel->countApproved($query, $category);
 
         $slim = array_map(fn($e) => [
-            'event_id'         => (int) $e['event_id'],
-            'title'            => $e['title'],
-            'category'         => $e['category'],
-            'venue'            => $e['venue'],
-            'city'             => $e['city'],
-            'date'             => $e['event_date'],
-            'time'             => $e['event_time'],
-            'price_npr'        => (float) $e['ticket_price'],
-            'available_seats'  => (int) $e['available_seats'],
+            'event_id'        => (int) $e['event_id'],
+            'title'           => $e['title'],
+            'category'        => $e['category'],
+            'venue'           => $e['venue'],
+            'city'            => $e['city'],
+            'date'            => $e['event_date'],
+            'time'            => $e['event_time'],
+            'price_npr'       => (float) $e['ticket_price'],
+            'available_seats' => (int) $e['available_seats'],
         ], $events);
 
         return ['count' => count($slim), 'total_matching' => $total, 'events' => $slim];
@@ -391,32 +387,34 @@ class ChatbotService {
             : ['error' => 'Could not cancel — booking not found, not yours, or already cancelled.'];
     }
 
-    /** POST to Gemini's generateContent endpoint. */
-    private function callGemini(array $contents, array $tools, string $systemInstruction): array {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key=" . urlencode($this->apiKey);
+    /** POST to Groq's OpenAI-compatible chat completions endpoint. */
+    private function callGroq(array $messages, array $tools): array {
         $payload = [
-            'systemInstruction' => ['parts' => [['text' => $systemInstruction]]],
-            'contents'          => $contents,
-            'tools'             => $tools,
-            'generationConfig'  => ['temperature' => 0.4],
+            'model'       => $this->model,
+            'messages'    => $messages,
+            'tools'       => $tools,
+            'temperature' => 0.4,
         ];
 
-        $ch = curl_init($url);
+        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
         curl_setopt_array($ch, [
             CURLOPT_POST           => true,
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->apiKey,
+            ],
             CURLOPT_POSTFIELDS     => json_encode($payload),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 30,
         ]);
-        $body = curl_exec($ch);
+        $body     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlErr  = curl_error($ch);
         curl_close($ch);
 
         if ($body === false) return ['error' => "Network error: $curlErr"];
         $decoded = json_decode($body, true);
-        if (!is_array($decoded)) return ['error' => 'Invalid response from Gemini.'];
+        if (!is_array($decoded)) return ['error' => 'Invalid response from Groq.'];
         if ($httpCode >= 400) {
             $msg = $decoded['error']['message'] ?? "HTTP $httpCode";
             return ['error' => $msg];
