@@ -52,8 +52,8 @@
             input.focus();
             if (messages.length === 0) {
                 const greeting = USER.id
-                    ? `Hi ${USER.name || 'there'}! I can help you find events and manage bookings. What are you looking for?`
-                    : 'Hi! I can help you find events. To book tickets you\'ll need to log in.';
+                    ? `Hey ${USER.name || 'there'}! Welcome back to Eventify! I'm here to help you discover events, check your bookings, or grab new tickets. What can I do for you today?`
+                    : 'Hey there! Welcome to Eventify! I can help you explore upcoming events and find the perfect one for you. Log in to book tickets. What are you interested in?';
                 renderAssistant(greeting);
             }
         }
