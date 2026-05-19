@@ -5,7 +5,7 @@
 
 // Application
 define('APP_NAME', 'Eventify');
-define('APP_URL', 'http://localhost/EMS_personal');
+define('APP_URL', 'http://localhost/event-management-system');
 define('APP_ENV', 'development');
 define('BASE_PATH', dirname(__DIR__));
 
