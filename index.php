@@ -9,6 +9,7 @@ require_once __DIR__ . '/config/db_connect.php';
 require_once __DIR__ . '/core/session_helper.php';
 require_once __DIR__ . '/core/csrf_helper.php';
 require_once __DIR__ . '/core/api_helpers.php';
+require_once __DIR__ . '/core/auth_helpers.php';
 
 // Determine the requested page
 $page = $_GET['page'] ?? 'home';

@@ -20,6 +20,22 @@ class AuthController {
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['full_name'] = $user['full_name'];
                 $_SESSION['email'] = $user['email'];
+
+                if (!empty($_POST['remember'])) {
+                    $lifetime = 60 * 60 * 24 * 30; // 30 days
+                    $_SESSION['remember_lifetime'] = $lifetime;
+                    $params = session_get_cookie_params();
+                    setcookie(
+                        session_name(),
+                        session_id(),
+                        time() + $lifetime,
+                        $params['path'],
+                        $params['domain'],
+                        $params['secure'],
+                        $params['httponly']
+                    );
+                }
+
                 setFlash('success', 'Welcome back, ' . $user['full_name'] . '!');
                 $dest = match($user['role']) {
                     'admin' => '/index.php?page=admin/dashboard',

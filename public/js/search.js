@@ -71,18 +71,26 @@ document.querySelectorAll('[data-autocomplete]').forEach(input => {
 // ========================================
 document.querySelectorAll('[data-email-check]').forEach(input => {
     const feedback = input.closest('.form-group')?.querySelector('.email-feedback');
+    let emailTaken = false;
+
     input.addEventListener('blur', async () => {
         const email = input.value.trim();
         if (!email) return;
-        const data = await apiFetch('/api/auth.php', {
-            method: 'POST', body: JSON.stringify({ email })
-        });
+        const data = await apiFetch(/api/auth.php?action=check_email&email=${encodeURIComponent(email)});
+        emailTaken = data.available === false;
         if (feedback) {
             if (data.available) {
                 feedback.innerHTML = '<span style="color:#27AE60">&#10003; Email available</span>';
             } else {
                 feedback.innerHTML = '<span style="color:var(--error)">&#10007; Email already taken</span>';
             }
+        }
+    });
+
+    input.closest('form')?.addEventListener('submit', e => {
+        if (emailTaken) {
+            e.preventDefault();
+            if (feedback) feedback.innerHTML = '<span style="color:var(--error)">&#10007; Email already taken</span>';
         }
     });
 });

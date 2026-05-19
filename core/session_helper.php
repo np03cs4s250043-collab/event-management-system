@@ -1,41 +1,36 @@
 <?php
-// core/session_helper.php
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
-
-function isLoggedIn(): bool        { return !empty($_SESSION['user_id']); }
-function currentUser(): ?array     { return $_SESSION['user'] ?? null; }
-function currentRole(): string     { return $_SESSION['user']['role'] ?? 'guest'; }
-function currentUserId(): ?int     { return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null; }
-
-//forces user to login if not already logged in
-function requireLogin(): void
-{
-    if (!isLoggedIn()) {
-        header('Location: ' . BASE_PATH . '/index.php?page=login');
-        exit;
-    }
+/**
+ * Session & Authentication Guard
+ */
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'httponly'  => true,
+        'samesite'  => 'Lax',
+    ]);
+    session_start();
 }
 
-//allows access only if ther user has required role
-function requireRole(string ...$roles): void
-{
-    requireLogin();
-    if (!in_array(currentRole(), $roles, true)) {
-        http_response_code(403);
-        die('Access denied.');
-    }
+// Session expiry check — honor extended lifetime when "Keep me signed in" was chosen
+$maxIdle = $_SESSION['remember_lifetime'] ?? SESSION_LIFETIME;
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $maxIdle) {
+    session_unset();
+    session_destroy();
+    session_start();
 }
+$_SESSION['last_activity'] = time();
 
-
-function setFlash(string $type, string $message): void
-{
-    $_SESSION['flash'] = ['type' => $type, 'message' => $message];
-}
-
-
-function getFlash(): ?array
-{
-    $flash = $_SESSION['flash'] ?? null;
-    unset($_SESSION['flash']);
-    return $flash;
+// Refresh the persistent cookie on each request so it keeps sliding forward
+if (!empty($_SESSION['remember_lifetime'])) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        session_id(),
+        time() + $_SESSION['remember_lifetime'],
+        $params['path'],
+        $params['domain'],
+        $params['secure'],
+        $params['httponly']
+    );
 }
