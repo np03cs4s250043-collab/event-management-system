@@ -43,11 +43,18 @@
             </label>
             <button type="submit" class="btn btn-primary" style="width:100%;padding:1rem;font-family:'Plus Jakarta Sans';font-size:1rem">Sign In</button>
         </form>
+<<<<<<< HEAD
         <div style="text-align:center;margin-top:1.5rem">
             <p style="font-size:.8rem;color:var(--color-text-secondary)">Don't have an account?
                 <a href="<?= APP_URL ?>/index.php?page=register"
                     style="color:var(--color-crimson);font-weight:700;text-decoration:none">Sign Up</a>
             </p>
+=======
+        <div style="text-align:center;margin-top:2rem">
+            <p style="font-size:0.875rem;color:var(--secondary)">Don't have an account? <a
+                    href="<?= APP_URL ?>/index.php?page=register"
+                    style="color:var(--primary);font-weight:700;text-decoration:none">Signup</a></p>
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
         </div>
         <div style="text-align:center;margin-top:.75rem">
             <a href="<?= APP_URL ?>/index.php"

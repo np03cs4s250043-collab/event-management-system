@@ -40,4 +40,8 @@
         </tbody>
     </table>
     <?php endif; ?>
+<<<<<<< HEAD
 </div>
+=======
+</div>
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
