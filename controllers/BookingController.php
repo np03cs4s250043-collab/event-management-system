@@ -1,4 +1,15 @@
 <?php
+<<<<<<< HEAD
+require_once __DIR__ . '/../models/Event.php';
+require_once __DIR__ . '/../models/Booking.php';
+
+class BookingController {
+
+    public function checkout(): void {
+        requireRole('attendee');
+        $pageTitle = 'Checkout';
+
+=======
 declare(strict_types=1);
 require_once __DIR__ . '/../models/Event.php';
 
@@ -14,6 +25,7 @@ class BookingController {
         requireRole('attendee');
         $pageTitle = 'Checkout';
 
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !validateCSRF()) {
             redirect(APP_URL . '/index.php?page=events');
         }
@@ -329,6 +341,8 @@ class BookingController {
         require_once __DIR__ . '/../views/attendee/profile.php';
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
+<<<<<<< HEAD
+=======
 
     public function adminBookings(): void {
         requireRole('admin');
@@ -373,4 +387,5 @@ class BookingController {
         require_once __DIR__ . '/../views/admin/revenue.php';
         require_once __DIR__ . '/../views/layouts/footer.php';
     }
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
 }

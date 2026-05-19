@@ -22,9 +22,12 @@ class Event {
         return $slug . '-' . bin2hex(random_bytes(4));
     }
 
+<<<<<<< HEAD
+=======
      /**
      * Find category ID using category name
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     private function lookupCategoryId(string $categoryName): ?int {
         $stmt = $this->db->prepare('SELECT id FROM event_categories WHERE name = ?');
         $stmt->execute([$categoryName]);
@@ -32,9 +35,12 @@ class Event {
         return $id !== false ? (int) $id : null;
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Create new event
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function create(array $data): int {
         $categoryId = $data['category_id'] ?? $this->lookupCategoryId($data['category'] ?? '');
         $slug = $this->generateSlug($data['title']);
@@ -60,9 +66,12 @@ class Event {
         return $eventId;
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Update existing event
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function update(int $id, array $data): bool {
         $categoryId = $data['category_id'] ?? $this->lookupCategoryId($data['category'] ?? '');
         $dateStart = ($data['event_date'] ?? '') . ' ' . ($data['event_time'] ?? '00:00:00');
@@ -84,17 +93,24 @@ class Event {
 
         return $result;
     }
+<<<<<<< HEAD
+
+=======
     /**
      * Delete event
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function delete(int $id): bool {
         $stmt = $this->db->prepare('DELETE FROM events WHERE id = ?');
         return $stmt->execute([$id]);
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Get single event by ID
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function findById(int $id): ?array {
         $fields = $this->selectFields('e');
         $stmt = $this->db->prepare("SELECT $fields, u.name AS organizer_name FROM events e JOIN users u ON e.organizer_id = u.id JOIN event_categories ec ON e.category_id = ec.id WHERE e.id = ?");
@@ -102,10 +118,13 @@ class Event {
         return $stmt->fetch() ?: null;
     }
 
+<<<<<<< HEAD
+=======
         /**
      * Get approved/published events
      */
 
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function getApproved(string $search = '', string $category = '', int $limit = 6, int $offset = 0): array {
         $fields = $this->selectFields('e');
         $sql = "SELECT $fields, u.name AS organizer_name FROM events e JOIN users u ON e.organizer_id = u.id JOIN event_categories ec ON e.category_id = ec.id WHERE e.status = 'published'";
@@ -119,10 +138,13 @@ class Event {
         return $stmt->fetchAll();
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Count approved events
      */
 
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function countApproved(string $search = '', string $category = ''): int {
         $sql = "SELECT COUNT(*) FROM events e JOIN event_categories ec ON e.category_id = ec.id WHERE e.status = 'published'";
         $params = [];
@@ -133,18 +155,24 @@ class Event {
         return (int) $stmt->fetchColumn();
     }
 
+<<<<<<< HEAD
+=======
      /**
      * Search event titles
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function searchTitles(string $q, int $limit = 8): array {
         $stmt = $this->db->prepare("SELECT e.id AS event_id, e.title, ec.name AS category FROM events e JOIN event_categories ec ON e.category_id = ec.id WHERE e.status = 'published' AND e.title LIKE ? LIMIT ?");
         $stmt->execute(["%$q%", $limit]);
         return $stmt->fetchAll();
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Get events created by organizer
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function getByOrganizer(int $orgId): array {
         $fields = $this->selectFields('e');
         $stmt = $this->db->prepare("SELECT $fields, ec.name AS category,
@@ -155,9 +183,12 @@ class Event {
         return $stmt->fetchAll();
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Get pending events
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function getPending(): array {
         $fields = $this->selectFields('e');
         $stmt = $this->db->prepare("SELECT $fields, u.name AS organizer_name FROM events e JOIN users u ON e.organizer_id = u.id JOIN event_categories ec ON e.category_id = ec.id WHERE e.status = 'draft' ORDER BY e.created_at DESC");
@@ -165,9 +196,12 @@ class Event {
         return $stmt->fetchAll();
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Get all events for admin panel
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function getAllAdmin(string $search = '', string $category = '', string $status = '', int $limit = 20, int $offset = 0): array {
         $fields = $this->selectFields('e');
         $sql = "SELECT $fields, u.name AS organizer_name FROM events e JOIN users u ON e.organizer_id = u.id JOIN event_categories ec ON e.category_id = ec.id WHERE 1=1";
@@ -182,9 +216,12 @@ class Event {
         return $stmt->fetchAll();
     }
 
+<<<<<<< HEAD
+=======
      /**
      * Count all admin events
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function countAllAdmin(string $search = '', string $category = '', string $status = ''): int {
         $sql = 'SELECT COUNT(*) FROM events e JOIN event_categories ec ON e.category_id = ec.id WHERE 1=1';
         $params = [];
@@ -196,42 +233,57 @@ class Event {
         return (int) $stmt->fetchColumn();
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Change event status
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function setStatus(int $id, string $status): bool {
         $stmt = $this->db->prepare('UPDATE events SET status = ? WHERE id = ?');
         return $stmt->execute([$status, $id]);
     }
 
+<<<<<<< HEAD
+=======
      /**
      * Reduce available ticket seats
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function decrementSeats(int $eventId, int $qty): bool {
         // In the new schema, increment quantity_sold on the ticket
         $stmt = $this->db->prepare('UPDATE tickets SET quantity_sold = quantity_sold + ? WHERE event_id = ? AND (quantity - quantity_sold) >= ? LIMIT 1');
         return $stmt->execute([$qty, $eventId, $qty]);
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Get total number of events
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function totalEvents(): int {
         return (int) $this->db->query('SELECT COUNT(*) FROM events')->fetchColumn();
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Get average rating of event
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function getAvgRating(int $eventId): float {
         $stmt = $this->db->prepare('SELECT AVG(rating) FROM reviews WHERE event_id = ?');
         $stmt->execute([$eventId]);
         return round((float) $stmt->fetchColumn(), 1);
     }
 
+<<<<<<< HEAD
+=======
      /**
      * Get all reviews for event
      */
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     public function getReviews(int $eventId): array {
         $stmt = $this->db->prepare('SELECT r.*, r.comment AS review_text, u.name AS full_name FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.event_id = ? ORDER BY r.created_at DESC');
         $stmt->execute([$eventId]);

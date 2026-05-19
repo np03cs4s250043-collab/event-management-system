@@ -35,8 +35,12 @@
             <td><span class="status-badge status-<?= strtolower($ev['status']) ?>"><?= h($ev['status']) ?></span></td>
             <td style="display:flex;gap:0.5rem;flex-wrap:wrap">
                 <?php if ($ev['status'] === 'draft'): ?>
+<<<<<<< HEAD
+                <a href="<?= APP_URL ?>/index.php?page=admin/commission" class="btn btn-primary btn-sm">Review commission</a>
+=======
                 <form method="POST" action="<?= APP_URL ?>/index.php?page=admin/approve" style="display:inline"><?= csrfField() ?><input type="hidden" name="event_id" value="<?= $ev['event_id'] ?>"><input type="hidden" name="action" value="approve"><button class="btn btn-success btn-sm">Approve</button></form>
                 <form method="POST" action="<?= APP_URL ?>/index.php?page=admin/approve" style="display:inline"><?= csrfField() ?><input type="hidden" name="event_id" value="<?= $ev['event_id'] ?>"><input type="hidden" name="action" value="reject"><button class="btn btn-danger btn-sm">Reject</button></form>
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
                 <?php endif; ?>
                 <form method="POST" action="<?= APP_URL ?>/index.php?page=admin/delete_event" style="display:inline"><?= csrfField() ?><input type="hidden" name="event_id" value="<?= $ev['event_id'] ?>"><button class="btn btn-sm" style="background:var(--surface-container-high)" data-confirm="Delete this event?">Delete</button></form>
             </td>
@@ -45,6 +49,12 @@
         </tbody>
     </table>
     <?php if ($pg['total_pages'] > 1): ?>
+<<<<<<< HEAD
+    <div class="pagination"><?php for ($i = 1; $i <= $pg['total_pages']; $i++): ?><a href="<?= APP_URL ?>/index.php?page=admin/events&search=<?= urlencode($search) ?>&category=<?= urlencode($category) ?>&status=<?= urlencode($status) ?>&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a><?php endfor; ?></div>
+    <?php endif; ?>
+</div>
+=======
     <div class="pagination"><?php for ($i = 1; $i <= $pg['total_pages']; $i++): ?><a href="?page=admin/events&search=<?= urlencode($search) ?>&category=<?= urlencode($category) ?>&status=<?= urlencode($status) ?>&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a><?php endfor; ?></div>
     <?php endif; ?>
 </div>
+>>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
