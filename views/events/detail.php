@@ -19,18 +19,11 @@
     <div class="category-pills">
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>" class="pill pill-all <?= !$category ? 'active' : '' ?>" data-category-filter="">All</a>
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Concert" class="pill pill-concert <?= $category === 'Concert' ? 'active' : '' ?>" data-category-filter="Concert">Concerts</a>
-<<<<<<< HEAD
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Music+Event" class="pill pill-music <?= $category === 'Music Event' ? 'active' : '' ?>" data-category-filter="Music Event">Music</a>
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Football" class="pill pill-football <?= $category === 'Football' ? 'active' : '' ?>" data-category-filter="Football">Football</a>
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Cricket" class="pill pill-cricket <?= $category === 'Cricket' ? 'active' : '' ?>" data-category-filter="Cricket">Cricket</a>
     </div>
     <p data-search-meta style="color:var(--secondary);font-size:0.9rem;min-height:1.3rem;margin-top:-0.5rem;margin-bottom:0.75rem"></p>
-=======
-        <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Music+Events" class="pill pill-music <?= $category === 'Music Events' ? 'active' : '' ?>" data-category-filter="Music Events">Music</a>
-        <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Football" class="pill pill-football <?= $category === 'Football' ? 'active' : '' ?>" data-category-filter="Football">Football</a>
-        <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=Cricket" class="pill pill-cricket <?= $category === 'Cricket' ? 'active' : '' ?>" data-category-filter="Cricket">Cricket</a>
-    </div>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
 </div>
 </section>
 
@@ -65,11 +58,7 @@
     <?php if (isset($pg) && $pg['total_pages'] > 1): ?>
     <div class="pagination" data-events-pagination>
         <?php for ($i = 1; $i <= $pg['total_pages']; $i++): ?>
-<<<<<<< HEAD
         <a href="<?= APP_URL ?>/index.php?page=events&search=<?= urlencode($search) ?>&category=<?= urlencode($category) ?>&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a>
-=======
-        <a href="?page=events&search=<?= urlencode($search) ?>&category=<?= urlencode($category) ?>&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
         <?php endfor; ?>
     </div>
     <?php endif; ?>
@@ -77,7 +66,6 @@
 
 <?php else: ?>
 <!-- Single Event Detail -->
-<<<<<<< HEAD
 <div>
     <!-- Cover Area (Full width) -->
     <section style="position:relative; width:100%; height:500px; overflow:hidden;">
@@ -103,10 +91,10 @@
                     .event-detail-grid { grid-template-columns: 1fr 380px !important; }
                 }
             </style>
-            
+
             <!-- Left Info Panel -->
             <div class="info">
-                
+
                 <!-- Quick Meta Cards -->
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1.5rem; margin-bottom:3rem;">
                     <div style="display:flex; align-items:center; gap:1rem; background:var(--surface-container-low); padding:1.25rem; border-radius:1rem; border:1px solid rgba(0,0,0,0.05);">
@@ -118,7 +106,7 @@
                             <p style="font-weight:600; color:var(--on-surface); font-size:1rem;"><?= date('M d, Y', strtotime($event['event_date'])) ?> • <?= date('h:i A', strtotime($event['event_time'])) ?></p>
                         </div>
                     </div>
-                    
+
                     <div style="display:flex; align-items:center; gap:1rem; background:var(--surface-container-low); padding:1.25rem; border-radius:1rem; border:1px solid rgba(0,0,0,0.05);">
                         <div style="background:rgba(179,25,61,0.1); padding:0.75rem; border-radius:0.5rem; display:flex; align-items:center; justify-content:center;">
                             <span class="material-symbols-outlined" style="color:var(--primary)">location_on</span>
@@ -171,7 +159,7 @@
                         </div>
                         <?php endif; ?>
                     </div>
-                    
+
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem;">
                         <?php foreach ($reviews as $rev): ?>
                         <div style="background:var(--surface-container-low); padding:1.75rem; border-radius:1rem; border-left:4px solid var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.03); display:flex; flex-direction:column; justify-content:space-between;">
@@ -224,7 +212,7 @@
                         <?= csrfField() ?>
                         <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                         <input type="hidden" name="quantity" value="1">
-                        
+
                         <div style="background:var(--surface); padding:1.25rem; border-radius:1rem; margin-bottom:2rem;">
                             <p style="font-size:0.875rem; font-weight:700; margin-bottom:0.75rem; color:var(--on-surface);">Quantity</p>
                             <div style="display:flex; align-items:center; justify-content:space-between; background:white; padding:0.5rem 0.75rem; border-radius:0.75rem; border:1px solid rgba(0,0,0,0.1); box-shadow:0 2px 4px rgba(0,0,0,0.02);" data-qty-selector data-price="<?= $event['ticket_price'] ?>" data-max="<?= $maxBookable ?>">
@@ -242,7 +230,7 @@
                         <button type="submit" style="width:100%; border:none; cursor:pointer; padding:1.25rem; border-radius:0.75rem; font-size:1.125rem; font-weight:700; color:white; background:linear-gradient(135deg, var(--primary), var(--primary-container)); box-shadow:0 8px 24px rgba(179,25,61,0.25); transition:all 0.3s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                             Buy Tickets
                         </button>
-                        
+
                         <div style="margin-top:1.5rem; text-align:center;">
                             <p style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.2em; color:var(--secondary); opacity:0.6; margin-bottom:0.75rem;">Secure Payment via</p>
                             <div style="display:inline-flex; justify-content:center; align-items:center; gap:0.5rem; filter:grayscale(100%); opacity:0.6; transition:all 0.3s; cursor:pointer;" onmouseover="this.style.filter='none';this.style.opacity='1'" onmouseout="this.style.filter='grayscale(100%)';this.style.opacity='0.6'">
@@ -277,82 +265,3 @@
     </div>
 </div>
 <?php endif; ?>
-=======
-<section class="container event-detail">
-    <div class="cover" style="<?= $event['cover_image'] ? "background-image:url(" . UPLOAD_URL . h($event['cover_image']) . ");background-size:cover;background-position:center" : 'display:flex;align-items:center;justify-content:center' ?>">
-        <?php if (!$event['cover_image']): ?><span class="material-symbols-outlined" style="font-size:4rem;color:rgba(255,255,255,0.3)">image</span><?php endif; ?>
-    </div>
-    <div class="content">
-        <div class="info">
-            <span class="badge" style="background:var(--<?= match($event['category']) {'Concert'=>'concert','Music Event'=>'music','Football'=>'football','Cricket'=>'cricket',default=>'secondary'} ?>);margin-bottom:0.5rem"><?= h($event['category']) ?></span>
-            <h1><?= h($event['title']) ?></h1>
-            <div class="meta-list">
-                <div class="meta-item"><span class="material-symbols-outlined">calendar_today</span> <?= date('l, M d, Y', strtotime($event['event_date'])) ?></div>
-                <div class="meta-item"><span class="material-symbols-outlined">schedule</span> <?= date('h:i A', strtotime($event['event_time'])) ?></div>
-                <div class="meta-item"><span class="material-symbols-outlined">location_on</span> <?= h($event['venue']) ?></div>
-                <div class="meta-item"><span class="material-symbols-outlined">person</span> Organized by <?= h($event['organizer_name']) ?></div>
-                <?php if ($avgRating > 0): ?>
-                <div class="meta-item"><span class="material-symbols-outlined" style="color:#F1C40F">star</span> <?= $avgRating ?>/5 (<?= count($reviews) ?> reviews)</div>
-                <?php endif; ?>
-            </div>
-            <div class="description"><?= nl2br(h($event['description'])) ?></div>
-
-            <?php if (!empty($reviews)): ?>
-            <div class="review-list">
-                <h3 style="margin-bottom:1rem">Reviews</h3>
-                <?php foreach ($reviews as $rev): ?>
-                <div class="review-item">
-                    <div class="review-header">
-                        <span class="reviewer"><?= h($rev['full_name']) ?></span>
-                        <span class="stars"><?= str_repeat('&#9733;', $rev['rating']) . str_repeat('&#9734;', 5 - $rev['rating']) ?></span>
-                    </div>
-                    <?php if ($rev['review_text']): ?><p class="review-text"><?= h($rev['review_text']) ?></p><?php endif; ?>
-                </div>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-        </div>
-
-        <div>
-            <div class="booking-card">
-                <div class="price-tag"><?= formatPrice($event['ticket_price']) ?> <span>/ ticket</span></div>
-                <div class="seats-bar">
-                    <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--secondary);margin-bottom:0.5rem">
-                        <span><?= $event['available_seats'] ?> seats left</span>
-                        <span><?= $seatPercent ?>% booked</span>
-                    </div>
-                    <div class="bar"><div class="fill" style="width:<?= $seatPercent ?>%"></div></div>
-                </div>
-                <?php if ($event['available_seats'] > 0 && isLoggedIn() && currentRole() === 'attendee'): ?>
-                <form action="<?= APP_URL ?>/index.php?page=checkout" method="POST">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
-                    <input type="hidden" name="quantity" value="1">
-                    <div class="qty-selector" data-qty-selector data-price="<?= $event['ticket_price'] ?>" data-max="<?= $maxBookable ?>">
-                        <button type="button" data-qty-minus>&minus;</button>
-                        <span class="qty" data-qty-value>1</span>
-                        <button type="button" data-qty-plus>+</button>
-                        <span style="font-size:0.8rem;color:var(--secondary)">Max <?= $maxBookable ?></span>
-                    </div>
-                    <div class="total">
-                        <span>Total</span>
-                        <span data-total-price><?= formatPrice($event['ticket_price']) ?></span>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%">
-                        <span class="material-symbols-outlined">shopping_cart</span> Buy Tickets
-                    </button>
-                    <p style="text-align:center;font-size:0.7rem;color:var(--secondary);margin-top:0.75rem">
-                        <span class="material-symbols-outlined" style="font-size:0.875rem;vertical-align:middle">check_circle</span> Booking is confirmed immediately after checkout
-                    </p>
-                </form>
-                <?php elseif ($event['available_seats'] <= 0): ?>
-                <div class="alert alert-error" style="margin-top:1rem">Sold Out!</div>
-                <?php elseif (!isLoggedIn()): ?>
-                <a href="<?= APP_URL ?>/index.php?page=login" class="btn btn-primary" style="width:100%;margin-top:1rem">Login to Book</a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-</section>
-<?php endif; ?>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

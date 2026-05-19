@@ -50,11 +50,7 @@ document.querySelectorAll('[data-autocomplete]').forEach(input => {
     input.addEventListener('input', debounce(async (e) => {
         const q = e.target.value.trim();
         if (q.length < 2) { dropdown.classList.remove('show'); return; }
-<<<<<<< HEAD
         const data = await apiFetch(`/api/index.php?resource=search&q=${encodeURIComponent(q)}`);
-=======
-        const data = await apiFetch(`/api/search.php?q=${encodeURIComponent(q)}`);
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
         if (data.results && data.results.length) {
             dropdown.innerHTML = data.results.map(r =>
                 `<a href="${APP_URL}/index.php?page=event&id=${r.event_id}">${r.title} <small style="color:var(--secondary)">${r.category}</small></a>`
@@ -75,20 +71,13 @@ document.querySelectorAll('[data-autocomplete]').forEach(input => {
 // ========================================
 document.querySelectorAll('[data-email-check]').forEach(input => {
     const feedback = input.closest('.form-group')?.querySelector('.email-feedback');
-<<<<<<< HEAD
-    input.addEventListener('blur', async () => {
-        const email = input.value.trim();
-        if (!email) return;
-        const data = await apiFetch(`/api/index.php?resource=auth&action=check_email&email=${encodeURIComponent(email)}`);
-=======
     let emailTaken = false;
 
     input.addEventListener('blur', async () => {
         const email = input.value.trim();
         if (!email) return;
-        const data = await apiFetch(/api/auth.php?action=check_email&email=${encodeURIComponent(email)});
+        const data = await apiFetch(`/api/index.php?resource=auth&action=check_email&email=${encodeURIComponent(email)}`);
         emailTaken = data.available === false;
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
         if (feedback) {
             if (data.available) {
                 feedback.innerHTML = '<span style="color:#27AE60">&#10003; Email available</span>';
@@ -97,8 +86,6 @@ document.querySelectorAll('[data-email-check]').forEach(input => {
             }
         }
     });
-<<<<<<< HEAD
-=======
 
     input.closest('form')?.addEventListener('submit', e => {
         if (emailTaken) {
@@ -106,7 +93,6 @@ document.querySelectorAll('[data-email-check]').forEach(input => {
             if (feedback) feedback.innerHTML = '<span style="color:var(--error)">&#10007; Email already taken</span>';
         }
     });
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
 });
 
 // ========================================
@@ -133,38 +119,6 @@ document.querySelectorAll('[data-qty-selector]').forEach(container => {
     update();
 });
 
-<<<<<<< HEAD
-=======
-// ========================================
-// Category Filter (Events page - Ajax)
-// ========================================
-document.querySelectorAll('[data-category-filter]').forEach(pill => {
-    pill.addEventListener('click', async (e) => {
-        e.preventDefault();
-        document.querySelectorAll('[data-category-filter]').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        const cat = pill.dataset.categoryFilter;
-        const grid = document.querySelector('[data-event-grid]');
-        if (!grid) return;
-
-        const search = document.querySelector('[name="search"]')?.value || '';
-        const url = `/api/events.php?category=${encodeURIComponent(cat)}&search=${encodeURIComponent(search)}`;
-        const data = await apiFetch(url);
-        if (data.html) {
-            grid.innerHTML = data.html;
-        } else if (data.events) {
-            grid.innerHTML = data.events.map(ev => renderEventCard(ev)).join('');
-        }
-        if (data.events?.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--secondary)"><span class="material-symbols-outlined" style="font-size:3rem;display:block;margin-bottom:1rem">search_off</span>No events found</div>';
-        }
-
-        const pagination = document.querySelector('[data-events-pagination]');
-        if (pagination) pagination.style.display = 'none';
-    });
-});
-
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
 function renderEventCard(ev) {
     const badgeVar = ev.category === 'Concert'
         ? 'concert'
@@ -204,7 +158,6 @@ function renderEventCard(ev) {
     </div>`;
 }
 
-<<<<<<< HEAD
 function renderEventSkeletonCard() {
     return `
     <div class="event-card event-skeleton" aria-hidden="true">
@@ -226,8 +179,6 @@ function renderSkeletonGrid(count = 6) {
     return Array.from({ length: count }, () => renderEventSkeletonCard()).join('');
 }
 
-=======
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
 // ========================================
 // Events Page - Live Ajax Search
 // ========================================
@@ -237,7 +188,6 @@ function renderSkeletonGrid(count = 6) {
     const form = document.querySelector('[data-events-search-form]');
     if (!searchInput || !grid || !form) return;
 
-<<<<<<< HEAD
     const categoryPills = document.querySelectorAll('[data-category-filter]');
     const pagination = document.querySelector('[data-events-pagination]');
     const searchBar = document.querySelector('[data-search-focus]');
@@ -258,7 +208,6 @@ function renderSkeletonGrid(count = 6) {
 
         if (isLoading) {
             const skeletonCount = Number.isInteger(liveLimit) && liveLimit > 0 ? liveLimit : 6;
-            // Avoid visual flicker on very fast responses.
             skeletonTimer = setTimeout(() => {
                 if (grid.classList.contains('is-loading')) {
                     grid.innerHTML = renderSkeletonGrid(skeletonCount);
@@ -332,26 +281,6 @@ function renderSkeletonGrid(count = 6) {
         });
     });
 
-=======
-    const pagination = document.querySelector('[data-events-pagination]');
-    const searchBar = document.querySelector('[data-search-focus]');
-
-    async function updateGrid() {
-        const activePill = document.querySelector('[data-category-filter].active');
-        const category = activePill?.dataset.categoryFilter || '';
-        const search = searchInput.value.trim();
-        const data = await apiFetch(`/api/events.php?category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`);
-
-        if (Array.isArray(data.events) && data.events.length) {
-            grid.innerHTML = data.events.map(ev => renderEventCard(ev)).join('');
-        } else {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:4rem;color:var(--secondary)"><span class="material-symbols-outlined" style="font-size:3.5rem;display:block;margin-bottom:1rem">search_off</span><h3>No events found</h3><p>Try a different keyword or category.</p></div>';
-        }
-
-        if (pagination) pagination.style.display = 'none';
-    }
-
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         await updateGrid();
@@ -390,11 +319,7 @@ document.querySelectorAll('[data-booking-tab]').forEach(tab => {
         const type = tab.dataset.bookingTab;
         const container = document.querySelector('[data-bookings-content]');
         if (!container) return;
-<<<<<<< HEAD
         const data = await apiFetch(`/api/index.php?resource=bookings&type=${type}`);
-=======
-        const data = await apiFetch(`/api/bookings.php?type=${type}`);
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
         if (data.html) container.innerHTML = data.html;
     });
 });
@@ -476,8 +401,4 @@ document.querySelectorAll('[data-toggle-password]').forEach(btn => {
 // Mobile sidebar toggle
 document.querySelector('[data-sidebar-toggle]')?.addEventListener('click', () => {
     document.querySelector('.sidebar')?.classList.toggle('show-mobile');
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

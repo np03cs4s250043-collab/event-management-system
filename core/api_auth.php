@@ -139,8 +139,4 @@ function purgeExpiredTokens(): int {
     $stmt = $db->prepare('DELETE FROM api_tokens WHERE expires_at < NOW()');
     $stmt->execute();
     return $stmt->rowCount();
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

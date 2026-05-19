@@ -24,7 +24,6 @@
                 <div class="form-group"><label>Max Capacity</label><input type="number" name="max_capacity" class="form-input" required min="1" value="<?= h(isset($event) ? $event['max_capacity'] : ($_POST['max_capacity'] ?? '')) ?>"></div>
                 <div class="form-group"><label>Ticket Price (Rs.)</label><input type="number" name="ticket_price" class="form-input" required min="1" step="0.01" value="<?= h(isset($event) ? $event['ticket_price'] : ($_POST['ticket_price'] ?? '')) ?>"></div>
             </div>
-<<<<<<< HEAD
             <?php if (!isset($event)): ?>
             <div class="form-group">
                 <label>Commission offered to platform (%)</label>
@@ -36,8 +35,6 @@
                 <input type="text" name="commission_note" class="form-input" maxlength="255" value="<?= h($_POST['commission_note'] ?? '') ?>" placeholder="Why this rate?">
             </div>
             <?php endif; ?>
-=======
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
             <?php if (isset($event)): ?>
             <div class="form-group"><label>Cover Image (leave empty to keep current)</label>
                 <div class="upload-area" data-upload-area>
@@ -66,16 +63,8 @@
             <button type="submit" class="btn btn-primary" style="width:100%;padding:0.875rem">
                 <span class="material-symbols-outlined" style="font-size:1.25rem">publish</span> Publish Event
             </button>
-<<<<<<< HEAD
             <p style="text-align:center;font-size:0.75rem;color:var(--secondary);margin-top:0.75rem">Event will be pending commission negotiation with admin</p>
         </div>
         <?php endif; ?>
     </form>
 </div>
-=======
-            <p style="text-align:center;font-size:0.75rem;color:var(--secondary);margin-top:0.75rem">Event will be pending admin approval</p>
-        </div>
-        <?php endif; ?>
-    </form>
-</div>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168

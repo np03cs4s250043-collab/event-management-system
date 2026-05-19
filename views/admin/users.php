@@ -27,11 +27,7 @@
             <td><?= date('M d, Y', strtotime($u['created_at'])) ?></td>
             <td><span class="status-badge status-<?= $u['is_active'] ? 'active' : 'inactive' ?>"><?= $u['is_active'] ? 'Active' : 'Inactive' ?></span></td>
             <td>
-<<<<<<< HEAD
-                <form method="POST" action="<?= APP_URL ?>/index.php?page=admin/toggle_user" style="display:inline">
-=======
                 <form method="POST" action="<?= APP_URL ?>/index.php?page=admin/toggle_user" style="display:inline" onsubmit="return confirm(<?= h(json_encode('Are you sure you want to ' . ($u['is_active'] ? 'deactivate' : 'activate') . ' ' . $u['full_name'] . '?')) ?>);">
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
                     <?= csrfField() ?><input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
                     <button type="submit" class="btn btn-sm <?= $u['is_active'] ? 'btn-danger' : 'btn-success' ?>"><?= $u['is_active'] ? 'Deactivate' : 'Activate' ?></button>
                 </form>
@@ -42,11 +38,7 @@
     </table>
     <?php if ($pg['total_pages'] > 1): ?>
     <div class="pagination"><?php for ($i = 1; $i <= $pg['total_pages']; $i++): ?>
-<<<<<<< HEAD
         <a href="<?= APP_URL ?>/index.php?page=admin/users&search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a>
-=======
-        <a href="?page=admin/users&search=<?= urlencode($search) ?>&role=<?= urlencode($role) ?>&p=<?= $i ?>" class="<?= $i === $pg['current_page'] ? 'active' : '' ?>"><?= $i ?></a>
->>>>>>> ab276b0e5f1949ae1291e04308f8288d48605168
     <?php endfor; ?></div>
     <?php endif; ?>
 </div>
