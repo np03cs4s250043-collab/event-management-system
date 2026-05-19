@@ -1,0 +1,13 @@
+# Secret keys — never commit
+config/secrets.php
+
+# Uploaded files
+public/uploads/*
+!public/uploads/.gitkeep
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

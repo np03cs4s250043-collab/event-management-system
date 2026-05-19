@@ -15,10 +15,16 @@ define('DB_NAME', 'eventify');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
-// Gemini AI (chatbot) — get a free key at https://aistudio.google.com/apikey
-// Set as env var GEMINI_API_KEY, or replace the empty string below for local dev.
-define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: 'AIzaSyCzKBWTISycD7jphU5JZHQHnojEgeb4ZwI');
-define('GEMINI_MODEL', 'gemini-2.5-flash-lite');
+// Groq AI (chatbot) — keys are loaded from config/secrets.php (gitignored).
+// See config/secrets.example.php for the required format.
+$_secretsFile = __DIR__ . '/secrets.php';
+if (file_exists($_secretsFile)) {
+    require_once $_secretsFile;
+}
+if (!defined('GROQ_API_KEY')) {
+    define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: '');
+}
+define('GROQ_MODEL', 'llama-3.3-70b-versatile');
 
 // Session
 define('SESSION_LIFETIME', 7200);
