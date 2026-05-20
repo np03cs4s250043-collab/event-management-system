@@ -2,7 +2,9 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
+require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
 
 function sendOtpEmail(string $toEmail, string $toName, string $otp): bool {
     $mail = new PHPMailer(true);
@@ -18,7 +20,8 @@ function sendOtpEmail(string $toEmail, string $toName, string $otp): bool {
         $mail->setFrom(defined('SMTP_FROM') ? SMTP_FROM : SMTP_USER, APP_NAME);
         $mail->addAddress($toEmail, $toName);
         $mail->isHTML(true);
-        $mail->Subject = 'Password Reset OTP — ' . APP_NAME;
+        $mail->CharSet = 'UTF-8';
+        $mail->Subject = 'Password Reset OTP - ' . APP_NAME;
         $mail->Body    = otpEmailBody($toName, $otp);
         $mail->AltBody = "Your " . APP_NAME . " password reset OTP is: $otp\nIt expires in 10 minutes.";
 
