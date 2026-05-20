@@ -40,8 +40,13 @@ class ChatbotService {
         for ($turn = 0; $turn < self::MAX_TOOL_TURNS; $turn++) {
             $resp = $this->callGroq($msgs, $tools);
 
+            // Groq sometimes rejects malformed tool calls — retry with forced text response.
+            if (isset($resp['error']) && str_contains((string) $resp['error'], 'tool call validation')) {
+                $resp = $this->callGroq($msgs, $tools, 'none');
+            }
+
             if (isset($resp['error'])) {
-                return ['reply' => 'Sorry, I hit an error: ' . $resp['error'], 'proposal' => null, 'login_required' => false];
+                return ['reply' => 'Sorry, something went wrong. Please try again.', 'proposal' => null, 'login_required' => false];
             }
 
             $choice = $resp['choices'][0] ?? null;
@@ -396,11 +401,12 @@ class ChatbotService {
     }
 
     /** POST to Groq's OpenAI-compatible chat completions endpoint. */
-    private function callGroq(array $messages, array $tools): array {
+    private function callGroq(array $messages, array $tools, string $toolChoice = 'auto'): array {
         $payload = [
             'model'       => $this->model,
             'messages'    => $messages,
             'tools'       => $tools,
+            'tool_choice' => $toolChoice,
             'temperature' => 0.4,
         ];
 
