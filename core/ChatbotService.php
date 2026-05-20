@@ -137,7 +137,7 @@ class ChatbotService {
                         'properties' => [
                             'query'    => ['type' => 'string',  'description' => 'Free-text search across title/description/venue.'],
                             'category' => ['type' => 'string',  'description' => 'Category name, e.g. "Concert", "Football".'],
-                            'limit'    => ['type' => 'integer', 'description' => 'Max results (default 10, max 20).'],
+                            'limit'    => ['type' => 'string', 'description' => 'Max results (default 10, max 20).'],
                         ],
                     ],
                 ],
@@ -150,7 +150,7 @@ class ChatbotService {
                     'parameters'  => [
                         'type'       => 'object',
                         'properties' => [
-                            'event_id' => ['type' => 'integer', 'description' => 'The event id from search_events results.'],
+                            'event_id' => ['type' => 'string', 'description' => 'The event id from search_events results.'],
                         ],
                         'required'   => ['event_id'],
                     ],
@@ -188,8 +188,8 @@ class ChatbotService {
                     'parameters'  => [
                         'type'       => 'object',
                         'properties' => [
-                            'event_id' => ['type' => 'integer'],
-                            'quantity' => ['type' => 'integer', 'description' => '1 to 5.'],
+                            'event_id' => ['type' => 'string'],
+                            'quantity' => ['type' => 'string', 'description' => '1 to 5.'],
                         ],
                         'required'   => ['event_id', 'quantity'],
                     ],
@@ -203,8 +203,8 @@ class ChatbotService {
                     'parameters'  => [
                         'type'       => 'object',
                         'properties' => [
-                            'event_id' => ['type' => 'integer'],
-                            'quantity' => ['type' => 'integer'],
+                            'event_id' => ['type' => 'string'],
+                            'quantity' => ['type' => 'string'],
                         ],
                         'required'   => ['event_id', 'quantity'],
                     ],
@@ -218,7 +218,7 @@ class ChatbotService {
                     'parameters'  => [
                         'type'       => 'object',
                         'properties' => [
-                            'booking_id' => ['type' => 'integer', 'description' => 'The booking id from get_my_bookings.'],
+                            'booking_id' => ['type' => 'string', 'description' => 'The booking id from get_my_bookings.'],
                         ],
                         'required'   => ['booking_id'],
                     ],
